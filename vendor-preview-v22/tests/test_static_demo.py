@@ -27,7 +27,7 @@ class StandaloneDemoTests(unittest.TestCase):
         cls.robots = contents('public/robots.txt')
 
     def test_complete_static_site(self):
-        for relative in ('public/index.html', 'public/assets/style.css',
+        for relative in ('public/index.html', 'public/404.html', 'public/assets/style.css',
                          'public/assets/app.js', 'public/health.json',
                          'public/robots.txt'):
             with self.subTest(relative=relative):
@@ -69,6 +69,25 @@ class StandaloneDemoTests(unittest.TestCase):
         self.assertEqual(self.manifest['status'], 'ok')
         self.assertEqual(self.manifest['version'], '2.2.0')
         self.assertIs(self.manifest['live_ai'], False)
+
+
+    def test_faq_reset_is_multilingual_and_local(self):
+        for phrase in ('重置演示对话', 'Mulakan semula sembang demo',
+                       'Reset demo conversation', "className='reset-demo'"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.js)
+        self.assertIn("messages.replaceChildren();addMessage(t.hi,'agent')", self.js)
+        self.assertIn('while(messages.children.length>15)', self.js)
+        self.assertIn("quick.querySelectorAll('.faq-question').length", self.js)
+
+    def test_accessible_static_error_page(self):
+        error_page = contents('public/404.html')
+        for expected in ('404 · 页面未找到', 'href="/"',
+                         'lang="ms"', 'lang="en"',
+                         'noindex, nofollow', '独立技术演示'):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, error_page)
+        self.assertNotRegex(error_page, r'<form\\b|<iframe\\b')
 
     def test_no_search_indexing(self):
         self.assertIn('Disallow: /', self.robots)

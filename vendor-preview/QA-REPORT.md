@@ -27,10 +27,29 @@
 | External resource entries | **PASS (bounded observation)** | Browser performance resource list showed zero external resource loads after page load. Does not certify all possible browser/network activity. |
 | HTML content restrictions | **PASS (source review)** | Meta CSP includes `connect-src 'none'`, `form-action 'none'`, and `default-src 'none'`. This is not a complete security assessment. |
 
+
+## HTTP response headers and anchor navigation (live read-only audit, 2026-10-09)
+Performed a direct GET response-header inspection of `https://master7-support-vendor-demo.onrender.com/` using a remote isolated shell. This is a **header observation** only, not a penetration test.
+
+| Response item | Observed result | Interpretation |
+| --- | --- | --- |
+| Root URL | `HTTP/2 200` | PASS — page is served. |
+| Unknown path `/__qa_not_found_20261009__/` | `HTTP/2 404` | PASS — returns a plain, unbranded error. |
+| `Strict-Transport-Security` | `max-age=315360000; includeSubdomains; preload` | PRESENT |
+| `X-Content-Type-Options` | `nosniff` | PRESENT |
+| `Content-Security-Policy` **HTTP response header** | Not returned in sampled GET response | **MISSING HEADER** — the HTML has a **meta CSP**, which is not equivalent to the response header. Review deployment-header configuration. |
+| `Referrer-Policy` | Not returned | **MISSING HEADER** — consider explicitly setting a suitable policy. |
+| `X-Frame-Options` | Not returned | **MISSING HEADER** — review anti-framing protection via `frame-ancestors` in an actual HTTP CSP header or a suitable legacy header. |
+| `Permissions-Policy` | Not returned | **MISSING HEADER** — review least-privilege feature policy. |
+
+Live browser follow-up: clicking `#privacy` changed `location.hash` to `#privacy` and showed the Chinese privacy heading. Clicking `#support` changed `location.hash` to `#support` and showed the scripted FAQ section. Focusing the language selector displayed a **solid 3px outline** (RGB 6,109,209). These are **desktop browser observations**, not iPhone/Android device acceptance.
+
+**Remediation is NOT applied by this report.** Security-header decisions should be reviewed by the deployment owner. A missing header is a hardening finding, not by itself proof of exploitability. The official production site is not covered.
+
 ## NOT VERIFIED / next acceptance checks
 - Physical Android Chrome and iPhone Safari tests; screen-reader compatibility and keyboard focus sequence.
 - Complete accessibility audit (including color contrast).
-- Browser console error capture, detailed traffic analysis, HTTP response security headers.
+- Browser console error capture, detailed traffic analysis, and remediation/verification of missing HTTP security-response headers.
 - Source-to-CDN byte-for-byte identity (HTML extractors may normalize markup).
 - Genuine AI integration and production customer website/admin acceptance; these are outside demo scope.
 

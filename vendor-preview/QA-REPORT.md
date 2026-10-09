@@ -1,35 +1,38 @@
-# MASTER7 Vendor Demo — QA Evidence (Non-transactional)
+# Technical Support Demo — Vendor QA Evidence (Non-transactional)
 
-> This document is for an isolated public informational/technical-support demonstration. **Not the production MASTER7 website. No live AI, accounts, registration, gambling, or payments.**
+> **Standalone public-information demo only.** This is not the production customer website. It contains scripted local FAQs, no real AI connection, customer data, accounts, registration, gambling actions, or payments.
 
-## Links
-- Public demo: https://master7-support-vendor-demo.onrender.com/
-- GitHub branch: `tech-support-preview-20261009`
-- Demo source: `vendor-preview/index.html`
-- Tracking: https://github.com/wbdream10-cpu/-LUCKYWIN52-BOT/issues/6
+## Verified locations and revision
+- Preview URL: https://master7-support-vendor-demo.onrender.com/
+- Repository: `wbdream10-cpu/platform-samples`, branch `tech-support-preview-20261009`, path `vendor-preview/index.html`
+- Render service `srv-db49mscs728c73a2p3vg`, latest page deployment `dep-db4a6j3tqb8s73ek72g0`, commit `3595f177527a6150270018efdf3885ad6cefc59a`, status `live` (2026-10-09).
+- QA tracking issue: https://github.com/wbdream10-cpu/-LUCKYWIN52-BOT/issues/6
 
-## Checks (2026-10-09)
+## Observed test results (2026-10-09)
 
-| Check | Status | Evidence / caveat |
-|---|---|---|
-| Public HTTP response | PASS | 2026-10-09, fresh external GET of https://master7-support-vendor-demo.onrender.com/ returned HTTP 200 and `text/html; charset=utf-8`. |
-| Render deployment | PASS | Deploy `dep-db49msks728c73a2p6pg` for service `srv-db49mscs728c73a2p3vg` reported `live` at Git commit `4d76cb5a46f8b57b2ba0c98b13113e9ab8462fa3`. |
-| Three-language content exists | PASS (source inspection) | GitHub `vendor-preview/index.html` includes Chinese (zh), Bahasa Melayu (ms), and English (en) dictionaries. |
-| Mobile CSS | PASS (local test); LIVE NOT VERIFIED | Local Chromium test previously covered widths 320/390/768/1280 with no reported horizontal overflow. Live Android/iOS browser test not completed. |
-| FAQ buttons | PASS (local test); LIVE NOT VERIFIED | Local Chromium test previously exercised first scripted FAQ answer in each language. Live click-through failed to produce a result due to remote browser timeout and subsequent concurrency cap. |
-| Privacy/contact display | PASS (source inspection) | Page includes privacy and contact information sections and no account form. |
-| No outbound data from preview | PASS (source inspection and local test) | The HTML uses a CSP `connect-src 'none'`, `form-action 'none'`, and local FAQ responses. Local test recorded no external network calls; this is not a formal security audit. |
-| Live AI model integration | NOT IMPLEMENTED | This is a scripted local FAQ, not a model-connected chatbot. |
-| Production website / customer accounts | OUT OF SCOPE | This demo is separate from www.master7.vip and contains no signup, login, gambling or payment functionality. |
+| Test | Result | Evidence and limits |
+| --- | --- | --- |
+| Public landing page | **PASS** | Fresh external read returned **HTTP 200** and displayed the demo page. |
+| Unknown URL / error handling | **PASS** | `/__qa_not_found_20261009__/` returned **HTTP 404** with plain `Not Found` text. No custom branded error page. |
+| Deployment | **PASS** | Render shows latest site-code deployment at commit `3595f177...` as `live`. |
+| Three languages | **PASS (live browser)** | Switching zh, ms, en changed the title, privacy labels, and FAQ buttons. |
+| FAQ interaction | **PASS (live browser)** | One scripted FAQ answer was clicked and verified in each language. The answers are **not** live AI. |
+| Responsive layout | **PASS (local Chromium)** | A separate 156-check local Chromium suite covered 320px, 390px, 768px, and 1280px. Physical iOS/Android devices not tested. |
+| FAQ button tap height | **PASS (live browser)** | Old height 38.34px was corrected; new deployed FAQ buttons measured **44px**. |
+| Language-selector accessibility name | **PASS (live browser)** | Selector accessible names now match Chinese `语言`, Malay `Bahasa`, and English `Language`. |
+| Privacy and contact descriptions | **PASS (live content)** | Both sections exist; real verified support details and a finalized privacy policy still need to be supplied. |
+| Demo-only notice | **PASS (live browser)** | Live page states that no real AI, accounts or transactions are connected. |
+| Forms / user inputs | **PASS (live DOM)** | Zero forms, input and textarea controls; one language selector. |
+| External scripts / links | **PASS (live DOM)** | No external script URLs, and only internal `#support` and `#privacy` links. |
+| External resource entries | **PASS (bounded observation)** | Browser performance resource list showed zero external resource loads after page load. Does not certify all possible browser/network activity. |
+| HTML content restrictions | **PASS (source review)** | Meta CSP includes `connect-src 'none'`, `form-action 'none'`, and `default-src 'none'`. This is not a complete security assessment. |
 
-## Outstanding acceptance work
-- Live-browser Chinese / Malay / English selector and FAQ-click tests on deployed URL.
-- Actual Android Chrome, iPhone Safari and desktop viewport review, not only local Chromium.
-- Accessibility audit: keyboard tab order, contrast, screen reader labeling, focus visibility.
-- Vendor confirmation that privacy and contact text is appropriate before any real launch.
-
-## Important interpretation
-A `live` Render deployment or HTTP 200 response verifies site availability, not application features. Earlier HTTP 404 was not reproduced during the latest external fetch. The remote interaction tool timed out and then reported its concurrency limit, so it produced no trustworthy pass/fail evidence for live clicks.
+## NOT VERIFIED / next acceptance checks
+- Physical Android Chrome and iPhone Safari tests; screen-reader compatibility and keyboard focus sequence.
+- Complete accessibility audit (including color contrast).
+- Browser console error capture, detailed traffic analysis, HTTP response security headers.
+- Source-to-CDN byte-for-byte identity (HTML extractors may normalize markup).
+- Genuine AI integration and production customer website/admin acceptance; these are outside demo scope.
 
 ## Change control
-The demo lives on a separate public GitHub branch and a separate Render static site, with `autoDeploy` off. **No updates to `www.master7.vip`, customer records, admin systems or payment flows.**
+No production system, domain, customer data or transactional workflow was changed by this QA review. The demo Render service has auto-deploy disabled, so this documentation-only GitHub commit does not change the live demo page.

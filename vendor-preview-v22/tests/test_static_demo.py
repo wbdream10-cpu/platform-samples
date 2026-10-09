@@ -87,7 +87,7 @@ class StandaloneDemoTests(unittest.TestCase):
                          'noindex, nofollow', '独立技术演示'):
             with self.subTest(expected=expected):
                 self.assertIn(expected, error_page)
-        self.assertNotRegex(error_page, r'<form\\b|<iframe\\b')
+        self.assertNotRegex(error_page, r'<form\b|<iframe\b')
 
     def test_no_search_indexing(self):
         self.assertIn('Disallow: /', self.robots)

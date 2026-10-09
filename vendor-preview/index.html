@@ -10,7 +10,7 @@
   <style>
     :root{--ink:#102b52;--soft:#375776;--accent:#a97819;--gold:#d6b165;--line:#d9e3ec;--back:#f3f7fb;--white:#fff;--focus:#066dd1;--err:#8a2e24}
     *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--back);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Arial,'Noto Sans SC',sans-serif;line-height:1.55}
-    button,a{font:inherit}a{color:var(--ink);text-underline-offset:3px}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    button,a{font:inherit}a{color:var(--ink);text-underline-offset:3px}button{cursor:pointer}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
     .shell{max-width:1120px;margin:0 auto;padding:0 22px}
     .demo{background:#fff7dc;color:#674600;border-bottom:1px solid #e8d39d;text-align:center;padding:8px 16px;font-size:.85rem;font-weight:700}
     header{background:var(--white);box-shadow:0 1px 0 var(--line)}.head{display:flex;gap:16px;align-items:center;justify-content:space-between;min-height:78px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
@@ -24,7 +24,7 @@
     .chat-panel{border-radius:16px;border:1px solid #c1d1df;background:#fff;overflow:hidden}.chat-bar{padding:16px;background:#102b52;color:white;display:flex;align-items:center;justify-content:space-between;gap:10px}.chat-bar strong{font-size:1rem}.chat-meta{color:#d5e2ee;font-size:.8rem}
     .messages{min-height:190px;max-height:300px;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#f7fafe}
     .message{padding:10px 12px;border-radius:13px;max-width:93%;font-size:.93rem;overflow-wrap:anywhere}.agent{align-self:flex-start;background:white;border:1px solid var(--line)}.visitor{align-self:flex-end;background:#e2f0ff}
-    .chat-controls{padding:15px;border-top:1px solid var(--line)}.quick{display:flex;flex-wrap:wrap;gap:8px}.quick button{background:#eef5fc;border:1px solid #b7cade;color:#173c66;border-radius:30px;padding:8px 10px;font-size:.82rem;text-align:left}
+    .chat-controls{padding:15px;border-top:1px solid var(--line)}.quick{display:flex;flex-wrap:wrap;gap:8px}.quick button{min-height:44px;background:#eef5fc;border:1px solid #b7cade;color:#173c66;border-radius:30px;padding:8px 10px;font-size:.82rem;text-align:left}
     .inline-muted{font-size:.83rem;color:#536b82;margin-top:10px}
     .disclaimer{font-size:.85rem;color:#52657b;border-top:1px solid var(--line);margin-top:20px;padding-top:18px}
     footer{padding:26px 0;background:white;border-top:1px solid var(--line);font-size:.85rem;color:#455b70}footer .shell{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -37,7 +37,7 @@
   <div class="demo" id="demo-banner">演示版本 · 无客户账号、交易或真实 AI 连接</div>
   <header><div class="shell head">
     <div class="brand"><div class="brandmark" aria-hidden="true">S</div><span id="brand-text">技术支持演示</span></div>
-    <div class="head-right"><label class="language-label" for="language">语言 / Bahasa / Language</label><select id="language" aria-label="Choose language"><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="en">English</option></select></div>
+    <div class="head-right"><label class="language-label" for="language">语言 / Bahasa / Language</label><select id="language"><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="en">English</option></select></div>
   </div></header>
   <main class="shell">
     <section class="hero" aria-labelledby="hero-heading">
@@ -82,7 +82,7 @@
     const messages=document.getElementById('messages');
     const quick=document.getElementById('quick-questions');
     function addMessage(text,cls){let el=document.createElement('div');el.className='message '+cls;el.textContent=text;messages.append(el);messages.scrollTop=messages.scrollHeight;}
-    function render(lang){const t=i18n[lang]||i18n.en;document.documentElement.lang=lang;for(const [id,value] of Object.entries(t)){if(typeof value==='string'){let el=document.getElementById(id);if(el)el.textContent=value;}} messages.replaceChildren();quick.replaceChildren();addMessage(t.hi,'agent');t.questions.forEach((q,i)=>{let b=document.createElement('button');b.type='button';b.textContent=q;b.addEventListener('click',()=>{addMessage(q,'visitor');addMessage(t.answers[i],'agent');});quick.append(b)});document.title=t['brand-text']+' — Demo Preview';}
+    function render(lang){const t=i18n[lang]||i18n.en;document.documentElement.lang=lang;document.querySelector('label[for="language"]').textContent=({zh:'语言',ms:'Bahasa',en:'Language'})[lang]||'Language';for(const [id,value] of Object.entries(t)){if(typeof value==='string'){let el=document.getElementById(id);if(el)el.textContent=value;}} messages.replaceChildren();quick.replaceChildren();addMessage(t.hi,'agent');t.questions.forEach((q,i)=>{let b=document.createElement('button');b.type='button';b.textContent=q;b.addEventListener('click',()=>{addMessage(q,'visitor');addMessage(t.answers[i],'agent');});quick.append(b)});document.title=t['brand-text']+' — Demo Preview';}
     select.addEventListener('change',()=>render(select.value));render('zh');
     // QA helper, no network calls and no private data.
     window.previewSelfTest=()=>({languages:Object.keys(i18n),faqButtons:quick.children.length,hasPrivacy:!!document.getElementById('privacy'),hasContact:!!document.getElementById('contact-heading'),noForms:document.forms.length===0});

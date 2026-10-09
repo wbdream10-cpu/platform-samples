@@ -1,0 +1,25 @@
+name: MASTER7 independent technical-demo V2.2 checks
+
+on:
+  push:
+    branches: ['codex/master7-support-demo-v22-20261009']
+    paths:
+      - 'vendor-preview-v22/**'
+      - '.github/workflows/master7-v22-static.yml'
+  pull_request:
+    paths:
+      - 'vendor-preview-v22/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-static-demo:
+    name: Validate non-transactional demo only
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify static build
+        run: cd vendor-preview-v22 && sh scripts/verify-build.sh
+      - name: Verify static content and privacy boundaries
+        run: cd vendor-preview-v22 && python3 -m unittest discover -s tests -v

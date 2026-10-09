@@ -53,5 +53,17 @@ Live browser follow-up: clicking `#privacy` changed `location.hash` to `#privacy
 - Source-to-CDN byte-for-byte identity (HTML extractors may normalize markup).
 - Genuine AI integration and production customer website/admin acceptance; these are outside demo scope.
 
+
+## MASTER7 display-name uniformity — live verified 2026-10-09
+
+- **New isolated preview code commit:** `18ad11d02bd6e3a16bef90a570d61e560f6eb993`.
+- **New Render deploy:** `dep-db4b78qjnfac73ar7jc0`, status **live**.
+- **Public preview:** uncached external request returned **HTTP 200** and document title **`MASTER7 — Demo Preview`**.
+- **Live browser interaction passed** for all three languages: 中文, Bahasa Melayu, English. In each language, the header displayed **MASTER7**, the document title was **MASTER7 — Demo Preview**, and a clearly visible **demo-only / no live AI** notice remained.
+- Only the **non-transactional independent technical-support demonstration** was rebranded. **Not changed or verified:** production `www.master7.vip`, Telegram account display names or @usernames, Render bot service names, GitHub repository names, real AI integration, customer account data or transactional functions.
+- Outstanding acceptance: physical Android/iPhone tests, full accessibility and security review, missing HTTP response headers noted above.
+
+This documentation-only update does not trigger a new Render deployment (auto-deploy is off).
+
 ## Change control
 No production system, domain, customer data or transactional workflow was changed by this QA review. The demo Render service has auto-deploy disabled, so this documentation-only GitHub commit does not change the live demo page.

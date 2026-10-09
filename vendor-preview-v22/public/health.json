@@ -1,0 +1,10 @@
+{
+  "accounts_connected": false,
+  "data_collection": false,
+  "description": "Static-file availability only; not an AI or backend health test.",
+  "kind": "static-technical-demo",
+  "live_ai": false,
+  "service": "master7-independent-support-demo-v2.2",
+  "status": "ok",
+  "version": "2.2.0"
+}

@@ -3,8 +3,9 @@
 const http = require('node:http');
 const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
+const { jiliCatalogueBody } = require('./jili');
 
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
 
 function cleanBase(value, fallback) {
@@ -41,6 +42,11 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   const vpayTimeZone = String(env.VPAY_TIME_ZONE || 'Asia/Kuala_Lumpur');
   const clotplayBase = cleanBase(env.CLOTPLAY_BASE_URL, 'https://api.coldboxservice.com/api/MOGI');
   const clotplayToken = String(env.CLOTPLAY_OPERATOR_TOKEN || '').trim();
+  const jiliBase = cleanBase(env.JILI_BASE_URL, 'https://wb-api-2.jiscc77s.com/api1');
+  const jiliAccounts = {
+    '1to1': { id: env.JILI_1TO1_AGENT_ID, secret: env.JILI_1TO1_AGENT_KEY, ratio: '1:1' },
+    '1to100': { id: env.JILI_1TO100_AGENT_ID, secret: env.JILI_1TO100_AGENT_KEY, ratio: '1:100' },
+  };
   const catalogueProfiles = {
     epicwin: {
       base: cleanBase(env.EPICWIN_BASE_URL, 'https://smapi.eptech88.com/api/opgateway/v1/op'),
@@ -208,6 +214,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
             epicwinGames: `${base}/providers/epicwin/games`,
             kissh5Games: `${base}/providers/918kissh5/games`,
             clotplayGames: `${base}/providers/clotplay/games`,
+            jiliGames: `${base}/providers/jili/games?account=1to1`,
             vpayStatus: `${base}/providers/vpay/status`,
             callbacks: `${base}/callbacks`,
           },
@@ -227,6 +234,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
             epicwin: Object.fromEntries(Object.entries(catalogueProfiles.epicwin.accounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
             kissh5: Object.fromEntries(Object.entries(catalogueProfiles['918kissh5'].accounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
             clotplay: Boolean(clotplayToken),
+            jili: Object.fromEntries(Object.entries(jiliAccounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
             vpay: Boolean(vpayTraderId && vpayApiToken),
           },
           callbackUrls: callbackUrls(),
@@ -243,6 +251,43 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const result = await cached('mega-games', () => mega('GetGameList', { Lang: 'en-us', Currency: currency }));
         const providerOK = Number(result.data && result.data.Status) === 200;
         return send(res, result.ok && providerOK ? 200 : 502, { provider: 'megah5', upstreamStatus: result.status, result: result.data }, cors);
+      }
+
+      if (req.method === 'GET' && url.pathname === '/providers/jili/games') {
+        const accountName = url.searchParams.get('account') || '1to1';
+        if (!Object.prototype.hasOwnProperty.call(jiliAccounts, accountName)) {
+          return send(res, 400, { error: 'invalid_catalogue_account' }, cors);
+        }
+        const account = jiliAccounts[accountName];
+        if (!account.id || !account.secret) return send(res, 503, { error: 'catalogue_not_configured' }, cors);
+        const endpoint = new URL(`${jiliBase}/GetGameList`);
+        if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) {
+          return send(res, 503, { error: 'jili_invalid_configuration' }, cors);
+        }
+        const agentId = String(account.id).trim();
+        if (!/^[A-Za-z0-9_]+$/.test(agentId)) return send(res, 503, { error: 'jili_invalid_configuration' }, cors);
+        const result = await upstream(endpoint.toString(), {
+          method: 'POST',
+          redirect: 'error',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: jiliCatalogueBody(agentId, String(account.secret), now()),
+        });
+        if (!result.ok || result.data?.ErrorCode !== 0 || !Array.isArray(result.data?.Data)) {
+          return send(res, 502, {
+            error: 'provider_catalogue_failed', provider: 'jili', upstreamStatus: result.status,
+            providerStatus: Number.isSafeInteger(result.data?.ErrorCode) ? result.data.ErrorCode : null,
+          }, cors);
+        }
+        return send(res, 200, {
+          provider: 'jili', account: accountName, currency: 'MYR', ratio: account.ratio,
+          games: result.data.Data.map(game => ({
+            gameCode: String(game?.GameId ?? ''),
+            name: typeof game?.name?.['en-US'] === 'string' ? game.name['en-US'] : '',
+            nameZh: typeof game?.name?.['zh-CN'] === 'string' ? game.name['zh-CN'] : '',
+            category: String(game?.GameCategoryId ?? ''),
+            jackpot: game?.JP === true,
+          })),
+        }, cors);
       }
 
       const catalogueMatch = url.pathname.match(/^\/providers\/(epicwin|918kissh5)\/games$/);
@@ -548,3 +593,4 @@ function start(env = process.env) {
 if (require.main === module) start();
 
 module.exports = { makeApp, megaSignature, start, utcSeconds };
+

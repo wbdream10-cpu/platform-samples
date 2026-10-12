@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-12T23:46:25Z",
+  "asOf": "2026-10-12T23:51:14.410261+00:00",
   "scope": "Catalogue integration only; one upstream supplier, multiple brands",
   "connections": [
     {
@@ -220,14 +220,17 @@
     "automaticCrediting": false,
     "traderId": "3647",
     "gatewayUrl": "https://gateway.vpay.club",
-    "configured": false,
+    "configured": true,
     "callbackUrls": {
       "payment": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
       "withdrawal": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal"
     },
     "depositProvider": "vpay",
     "withdrawalProvider": "vpay",
-    "configurationUpdatedAt": "2026-10-12T23:48:24+00:00"
+    "configurationUpdatedAt": "2026-10-12T23:48:24+00:00",
+    "configurationOnly": true,
+    "mode": "uat",
+    "businessQaPassed": false
   },
   "productionQa": "Not complete; no QA credentials or success claim issued",
   "frontendCatalogue": {
@@ -276,17 +279,17 @@
       "provider": "VPay",
       "type": "充值",
       "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
-      "status": "GET可达；configured=false",
+      "status": "配置检测通过；业务未验收",
       "testId": "不适用（支付回调）",
-      "checkedAt": "2026-10-13 07:42 MYT"
+      "checkedAt": "2026-10-13 07:51 MYT"
     },
     {
       "provider": "VPay",
       "type": "提款",
       "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal",
-      "status": "GET可达；configured=false",
+      "status": "配置检测通过；业务未验收",
       "testId": "不适用（支付回调）",
-      "checkedAt": "2026-10-13 07:42 MYT"
+      "checkedAt": "2026-10-13 07:51 MYT"
     }
   ]
 }

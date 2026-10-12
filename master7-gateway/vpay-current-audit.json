@@ -1,0 +1,62 @@
+[
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/vpay/status",
+    "http": 200,
+    "response": {
+      "provider": "vpay",
+      "configured": true,
+      "mode": "uat",
+      "gateway": "https://gateway.vpay.club",
+      "callbackUrls": {
+        "payment": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
+        "withdrawal": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal"
+      }
+    },
+    "checkedAt": "2026-10-12T23:51:07.286094+00:00"
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
+    "http": 200,
+    "response": {
+      "ok": true,
+      "provider": "vpay",
+      "callback": "payment",
+      "configured": true,
+      "currency": "MYR"
+    },
+    "checkedAt": "2026-10-12T23:51:07.283836+00:00"
+  },
+  {
+    "method": "POST",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
+    "http": 401,
+    "response": {
+      "error": "invalid_vpay_signature"
+    },
+    "checkedAt": "2026-10-12T23:51:07.662383+00:00"
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal",
+    "http": 200,
+    "response": {
+      "ok": true,
+      "provider": "vpay",
+      "callback": "withdrawal",
+      "configured": true,
+      "currency": "MYR"
+    },
+    "checkedAt": "2026-10-12T23:51:14.345840+00:00"
+  },
+  {
+    "method": "POST",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal",
+    "http": 401,
+    "response": {
+      "error": "invalid_vpay_signature"
+    },
+    "checkedAt": "2026-10-12T23:51:14.410261+00:00"
+  }
+]

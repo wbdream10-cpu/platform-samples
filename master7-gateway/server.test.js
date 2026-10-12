@@ -52,6 +52,18 @@ test('EVO catalog uses bearer token and hides it from response', async () => {
   assert.equal(JSON.stringify(data).includes('token-value'), false);
 });
 
+test('EVO provider error is not reported as a successful connection', async () => {
+  const fetchImpl = async () => new Response(JSON.stringify({ code: 130, message: 'IP address is not in whitelist' }), { status: 200 });
+  const res = await run(makeApp({ env: { EVO_API_TOKEN: 'token-value' }, fetchImpl }), '/providers/evo888h5/games');
+  assert.equal(res.status, 502);
+});
+
+test('egress diagnostic returns the current service IP without credentials', async () => {
+  const fetchImpl = async () => new Response(JSON.stringify({ ip: '203.0.113.9' }), { status: 200 });
+  const res = await run(makeApp({ env: {}, fetchImpl }), '/diagnostics/egress-ip');
+  assert.deepEqual(await res.json(), { ok: true, ip: '203.0.113.9' });
+});
+
 test('admin routes reject missing token', async () => {
   const res = await run(makeApp({ env: { GATEWAY_ADMIN_TOKEN: 'x'.repeat(32) } }), '/admin/evo888h5/player', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: 'test1' }) });
   assert.equal(res.status, 401);

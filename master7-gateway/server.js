@@ -4,8 +4,9 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
 const { jiliCatalogueBody } = require('./jili');
+const { venusCatalogue } = require('./venus');
 
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
 
 function cleanBase(value, fallback) {
@@ -215,6 +216,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
             kissh5Games: `${base}/providers/918kissh5/games`,
             clotplayGames: `${base}/providers/clotplay/games`,
             jiliGames: `${base}/providers/jili/games?account=1to1`,
+            venusGames: `${base}/providers/venus/games`,
             vpayStatus: `${base}/providers/vpay/status`,
             callbacks: `${base}/callbacks`,
           },
@@ -230,6 +232,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           mode: String(env.GATEWAY_MODE || 'uat'),
           configured: {
             evo888h5: Boolean(env.EVO_API_TOKEN),
+            venus: Boolean(env.VENUS_SITE_CODE && env.VENUS_API_KEY),
             megah5: Boolean(env.MEGA_OPERATOR_ID && env.MEGA_SECRET_KEY),
             epicwin: Object.fromEntries(Object.entries(catalogueProfiles.epicwin.accounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
             kissh5: Object.fromEntries(Object.entries(catalogueProfiles['918kissh5'].accounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
@@ -251,6 +254,11 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const result = await cached('mega-games', () => mega('GetGameList', { Lang: 'en-us', Currency: currency }));
         const providerOK = Number(result.data && result.data.Status) === 200;
         return send(res, result.ok && providerOK ? 200 : 502, { provider: 'megah5', upstreamStatus: result.status, result: result.data }, cors);
+      }
+
+      if (req.method === 'GET' && url.pathname === '/providers/venus/games') {
+        const result = await cached('venus-games', async () => ({ ok: true, data: await venusCatalogue({ env, fetchImpl, now }) }));
+        return send(res, 200, result.data, cors);
       }
 
       if (req.method === 'GET' && url.pathname === '/providers/jili/games') {

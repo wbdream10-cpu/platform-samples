@@ -4,7 +4,7 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
 
 function cleanBase(value, fallback) {
@@ -41,6 +41,23 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   const vpayTimeZone = String(env.VPAY_TIME_ZONE || 'Asia/Kuala_Lumpur');
   const clotplayBase = cleanBase(env.CLOTPLAY_BASE_URL, 'https://api.coldboxservice.com/api/MOGI');
   const clotplayToken = String(env.CLOTPLAY_OPERATOR_TOKEN || '').trim();
+  const catalogueProfiles = {
+    epicwin: {
+      base: cleanBase(env.EPICWIN_BASE_URL, 'https://smapi.eptech88.com/api/opgateway/v1/op'),
+      accounts: {
+        normal: { id: env.EPICWIN_NORMAL_OPERATOR_ID, secret: env.EPICWIN_NORMAL_SECRET_KEY, currency: 'MYR' },
+        free: { id: env.EPICWIN_FREE_OPERATOR_ID, secret: env.EPICWIN_FREE_SECRET_KEY, currency: 'MYR' },
+      },
+    },
+    '918kissh5': {
+      base: cleanBase(env.KISSH5_BASE_URL, 'https://kh5api.kisssysapi.com/api/opgateway/v1/op'),
+      accounts: {
+        normal: { id: env.KISSH5_NORMAL_OPERATOR_ID, secret: env.KISSH5_NORMAL_SECRET_KEY, currency: 'MYR' },
+        my1: { id: env.KISSH5_MY1_OPERATOR_ID, secret: env.KISSH5_MY1_SECRET_KEY, currency: 'MY1' },
+        free: { id: env.KISSH5_FREE_OPERATOR_ID, secret: env.KISSH5_FREE_SECRET_KEY, currency: 'MYR' },
+      },
+    },
+  };
   const cache = new Map();
 
   function headers(extra = {}) {
@@ -188,6 +205,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           endpoints: {
             megah5Games: `${base}/providers/megah5/games`,
             evo888h5Games: `${base}/providers/evo888h5/games`,
+            epicwinGames: `${base}/providers/epicwin/games`,
+            kissh5Games: `${base}/providers/918kissh5/games`,
             clotplayGames: `${base}/providers/clotplay/games`,
             vpayStatus: `${base}/providers/vpay/status`,
             callbacks: `${base}/callbacks`,
@@ -205,6 +224,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           configured: {
             evo888h5: Boolean(env.EVO_API_TOKEN),
             megah5: Boolean(env.MEGA_OPERATOR_ID && env.MEGA_SECRET_KEY),
+            epicwin: Object.fromEntries(Object.entries(catalogueProfiles.epicwin.accounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
+            kissh5: Object.fromEntries(Object.entries(catalogueProfiles['918kissh5'].accounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
             clotplay: Boolean(clotplayToken),
             vpay: Boolean(vpayTraderId && vpayApiToken),
           },
@@ -222,6 +243,50 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const result = await cached('mega-games', () => mega('GetGameList', { Lang: 'en-us', Currency: currency }));
         const providerOK = Number(result.data && result.data.Status) === 200;
         return send(res, result.ok && providerOK ? 200 : 502, { provider: 'megah5', upstreamStatus: result.status, result: result.data }, cors);
+      }
+
+      const catalogueMatch = url.pathname.match(/^\/providers\/(epicwin|918kissh5)\/games$/);
+      if (req.method === 'GET' && catalogueMatch) {
+        const provider = catalogueMatch[1];
+        const profile = catalogueProfiles[provider];
+        const accountName = url.searchParams.get('account') || 'normal';
+        if (!Object.prototype.hasOwnProperty.call(profile.accounts, accountName)) {
+          return send(res, 400, { error: 'invalid_catalogue_account' }, cors);
+        }
+        const account = profile.accounts[accountName];
+        if (!account.id || !account.secret) return send(res, 503, { error: 'catalogue_not_configured' }, cors);
+        const date = utcSeconds(now());
+        const result = await upstream(`${profile.base}/GetGameList`, {
+          method: 'POST',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            OperatorId: String(account.id),
+            RequestDateTime: date,
+            Signature: megaSignature('GetGameList', date, String(account.id), String(account.secret)),
+            Currency: account.currency,
+            Lang: 'en-us',
+          }),
+        });
+        if (!result.ok || Number(result.data?.Status) !== 200 || !Array.isArray(result.data?.Game)) {
+          const status = Number(result.data?.Status);
+          return send(res, 502, {
+            error: 'provider_catalogue_failed',
+            provider,
+            upstreamStatus: result.status,
+            providerStatus: Number.isSafeInteger(status) ? status : null,
+          }, cors);
+        }
+        return send(res, 200, {
+          provider,
+          account: accountName,
+          currency: account.currency,
+          games: result.data.Game.map(game => ({
+            gameCode: String(game.GameCode || ''),
+            name: String(game.GameName || game.Name || ''),
+            category: String(game.GameType ?? ''),
+            imageUrl: typeof game.ImageUrl === 'string' && game.ImageUrl.startsWith('https://') ? game.ImageUrl : null,
+          })),
+        }, cors);
       }
 
       if (req.method === 'GET' && url.pathname === '/providers/clotplay/games') {

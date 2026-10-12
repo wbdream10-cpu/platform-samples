@@ -111,3 +111,50 @@ test('CLOTPLAY upstream failure does not leak response credentials', async () =>
   assert.equal(res.status,502);
   assert.deepEqual(await res.json(),{error:'clotplay_catalogue_failed',upstreamStatus:403});
 });
+
+test('EPICWIN and KISSH5 catalogue profiles keep credentials and currencies separate', async () => {
+  const cases = [
+    ['epicwin','normal','epic-normal','epic-n-secret','MYR'],
+    ['epicwin','free','epic-free','epic-f-secret','MYR'],
+    ['918kissh5','normal','kiss-normal','kiss-n-secret','MYR'],
+    ['918kissh5','my1','kiss-my1','kiss-m-secret','MY1'],
+    ['918kissh5','free','kiss-free','kiss-f-secret','MYR'],
+  ];
+  const env={
+    EPICWIN_NORMAL_OPERATOR_ID:'epic-normal',EPICWIN_NORMAL_SECRET_KEY:'epic-n-secret',
+    EPICWIN_FREE_OPERATOR_ID:'epic-free',EPICWIN_FREE_SECRET_KEY:'epic-f-secret',
+    KISSH5_NORMAL_OPERATOR_ID:'kiss-normal',KISSH5_NORMAL_SECRET_KEY:'kiss-n-secret',
+    KISSH5_MY1_OPERATOR_ID:'kiss-my1',KISSH5_MY1_SECRET_KEY:'kiss-m-secret',
+    KISSH5_FREE_OPERATOR_ID:'kiss-free',KISSH5_FREE_SECRET_KEY:'kiss-f-secret',
+  };
+  for(const [provider,account,id,secret,currency] of cases){
+    let sent;
+    const now=()=>new Date('2026-10-12T22:00:00Z');
+    const fetchImpl=async(url,options)=>{
+      sent={url,body:JSON.parse(options.body)};
+      return new Response(JSON.stringify({Status:200,Game:[{GameCode:'1',GameName:'Sample',GameType:1,ImageUrl:'https://example.test/a.png',private:'hidden'}],SecretKey:secret}));
+    };
+    const res=await run(makeApp({env,fetchImpl,now}),'/providers/'+provider+'/games?account='+account);
+    const data=await res.json();
+    assert.equal(res.status,200);
+    assert.equal(sent.body.OperatorId,id);assert.equal(sent.body.Currency,currency);
+    assert.equal(sent.body.Signature,megaSignature('GetGameList','2026-10-12T22:00:00Z',id,secret));
+    assert.equal(data.games[0].imageUrl,'https://example.test/a.png');
+    assert.ok(!JSON.stringify(data).includes(secret));assert.ok(!JSON.stringify(data).includes('hidden'));
+    assert.equal(data.currency,currency);
+  }
+});
+test('catalogue profiles reject unknown accounts and missing keys without network requests', async()=>{
+  let calls=0;const fetchImpl=async()=>{calls++;throw new Error('unexpected');};
+  for(const p of ['epicwin','918kissh5']){
+    assert.equal((await run(makeApp({env:{},fetchImpl}),'/providers/'+p+'/games')).status,503);
+    assert.equal((await run(makeApp({env:{},fetchImpl}),'/providers/'+p+'/games?account=toString')).status,400);
+  }
+  assert.equal(calls,0);
+});
+test('catalogue provider denial remains a failure and hides upstream secrets',async()=>{
+  const fetchImpl=async()=>new Response(JSON.stringify({Status:900403,SecretKey:'private'}));
+  const res=await run(makeApp({env:{EPICWIN_NORMAL_OPERATOR_ID:'id',EPICWIN_NORMAL_SECRET_KEY:'secret'},fetchImpl}),'/providers/epicwin/games');
+  const data=await res.json();assert.equal(res.status,502);assert.equal(data.providerStatus,900403);
+  assert.ok(!JSON.stringify(data).includes('private'));
+});

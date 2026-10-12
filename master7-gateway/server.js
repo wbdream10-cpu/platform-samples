@@ -144,6 +144,23 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
 
     const url = new URL(req.url, 'http://localhost');
     try {
+      if (req.method === 'GET' && url.pathname === '/') {
+        const base = publicBase || 'https://master7-integration-gateway.onrender.com';
+        return send(res, 200, {
+          ok: true,
+          service: 'MASTER7 API',
+          status: 'online',
+          currency,
+          mode: String(env.GATEWAY_MODE || 'uat'),
+          health: `${base}/health`,
+          endpoints: {
+            megah5Games: `${base}/providers/megah5/games`,
+            evo888h5Games: `${base}/providers/evo888h5/games`,
+            callbacks: `${base}/callbacks`,
+          },
+        }, cors);
+      }
+
       if (req.method === 'GET' && url.pathname === '/health') {
         return send(res, 200, {
           ok: true,

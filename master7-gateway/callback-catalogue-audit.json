@@ -1,0 +1,133 @@
+[
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/jili/games?account=1to1",
+    "http": 200,
+    "checkedAt": "2026-10-12T23:42:52.633873+00:00",
+    "provider": "jili",
+    "account": "1to1",
+    "currency": "MYR",
+    "entries": 293,
+    "uniqueEntries": 293,
+    "missingNames": 0,
+    "lobbies": 2
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/918kissh5/games?account=normal",
+    "http": 200,
+    "checkedAt": "2026-10-12T23:42:52.631844+00:00",
+    "provider": "918kissh5",
+    "account": "normal",
+    "currency": "MYR",
+    "entries": 91,
+    "uniqueEntries": 91,
+    "missingNames": 0,
+    "lobbies": 0
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/venus/games",
+    "http": 502,
+    "checkedAt": "2026-10-12T23:42:52.534788+00:00",
+    "response": {
+      "error": "venus_response_signature_missing"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/epicwin/games?account=normal",
+    "http": 502,
+    "checkedAt": "2026-10-12T23:42:52.430616+00:00",
+    "response": {
+      "error": "provider_catalogue_failed",
+      "provider": "epicwin",
+      "upstreamStatus": 403,
+      "providerStatus": null
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/evo888h5/games",
+    "http": 502,
+    "checkedAt": "2026-10-12T23:42:59.434196+00:00",
+    "response": {
+      "provider": "evo888h5",
+      "upstreamStatus": 200,
+      "result": {
+        "code": 130,
+        "message": "IP address is not in whitelist"
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/clotplay/games",
+    "http": 502,
+    "checkedAt": "2026-10-12T23:42:59.427375+00:00",
+    "response": {
+      "error": "clotplay_catalogue_failed",
+      "upstreamStatus": 403
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://master7-integration-gateway.onrender.com/providers/vpay/status",
+    "http": 200,
+    "checkedAt": "2026-10-12T23:42:59.337528+00:00",
+    "response": {
+      "provider": "vpay",
+      "configured": false,
+      "mode": "uat",
+      "gateway": "https://gateway.vpay.club",
+      "callbackUrls": {
+        "payment": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
+        "withdrawal": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/cosmoplay",
+    "http": 503,
+    "checkedAt": "2026-10-12T23:42:59.337057+00:00",
+    "response": {
+      "ok": false,
+      "provider": "cosmoplay",
+      "code": "CALLBACK_CONTRACT_NOT_ACTIVE"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/creative-gaming",
+    "http": 503,
+    "checkedAt": "2026-10-12T23:43:06.199522+00:00",
+    "response": {
+      "ok": false,
+      "provider": "creative-gaming",
+      "code": "CALLBACK_CONTRACT_NOT_ACTIVE"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/pgsoft",
+    "http": 503,
+    "checkedAt": "2026-10-12T23:43:06.140129+00:00",
+    "response": {
+      "ok": false,
+      "provider": "pgsoft",
+      "code": "CALLBACK_CONTRACT_NOT_ACTIVE"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "https://master7-integration-gateway.onrender.com/callbacks/spade-gaming",
+    "http": 503,
+    "checkedAt": "2026-10-12T23:43:06.195512+00:00",
+    "response": {
+      "ok": false,
+      "provider": "spade-gaming",
+      "code": "CALLBACK_CONTRACT_NOT_ACTIVE"
+    }
+  }
+]

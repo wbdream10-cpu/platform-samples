@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-12T23:21:57Z",
+  "asOf": "2026-10-12T23:46:25Z",
   "scope": "Catalogue integration only; one upstream supplier, multiple brands",
   "connections": [
     {
@@ -12,28 +12,28 @@
     {
       "brand": "EVO888H5",
       "status": "厂家拒绝",
-      "evidence": "本次 code 130；厂家提示 IP address is not in whitelist。 本次重新收到同名资料，未重复建项。",
+      "evidence": "07:42复查仍为code130，厂家提示IP address is not in whitelist。",
       "environment": "生产资料；网关整体标记 UAT",
       "group": "受阻"
     },
     {
       "brand": "CLOTPLAY",
       "status": "厂家拒绝",
-      "evidence": "清单代码已部署；本次上游 HTTP 403，网关 HTTP 502。",
+      "evidence": "07:42复查仍为上游HTTP403，网关HTTP502。",
       "environment": "Production",
       "group": "受阻"
     },
     {
       "brand": "EPICWIN",
       "status": "厂家拒绝",
-      "evidence": "Normal、Free 配置已保存、代码已上线；两组实测均为上游HTTP 403。",
+      "evidence": "07:42复查Normal仍为上游HTTP403；07:00 Free也是403。",
       "environment": "Production",
       "group": "受阻"
     },
     {
       "brand": "918KISSH5",
       "status": "已取得清单",
-      "evidence": "MYR 1:1、MY1 1:100 各91个；Free 87个。三组均HTTP 200，合并去重91个。",
+      "evidence": "07:42复查normal：HTTP200，91个唯一代码，无空名称。07:00已确认MY1相同、Free为其中87个。",
       "environment": "Production / MYR、MY1",
       "group": "已验证"
     },
@@ -68,7 +68,7 @@
     {
       "brand": "JILI",
       "status": "已取得清单",
-      "evidence": "1:1 与 1:100 正式地址均返回 HTTP 200；各293条，内容相同，含2个大厅入口。",
+      "evidence": "07:42复查1:1：HTTP200，293个唯一代码，含291游戏和2大厅，无空名称。07:00已确认1:100相同。",
       "environment": "Production / MYR 1:1、1:100",
       "group": "已验证"
     },
@@ -88,43 +88,43 @@
     },
     {
       "brand": "Cosmoplay",
-      "status": "仅回调地址可达",
-      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "status": "业务回调未启用",
+      "evidence": "07:43 实测 POST 返回 HTTP 503 / CALLBACK_CONTRACT_NOT_ACTIVE；测试玩家ID尚未创建，不能提交QA。",
       "environment": "未验证",
-      "group": "未验证"
+      "group": "受阻"
     },
     {
       "brand": "Creative Gaming",
-      "status": "仅回调地址可达",
-      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "status": "业务回调未启用",
+      "evidence": "07:43 实测 POST 返回 HTTP 503 / CALLBACK_CONTRACT_NOT_ACTIVE；测试玩家ID尚未创建，不能提交QA。",
       "environment": "未验证",
-      "group": "未验证"
+      "group": "受阻"
     },
     {
       "brand": "PGSOFT",
-      "status": "仅回调地址可达",
-      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "status": "业务回调未启用",
+      "evidence": "07:43 实测 POST 返回 HTTP 503 / CALLBACK_CONTRACT_NOT_ACTIVE；测试玩家ID尚未创建，不能提交QA。",
       "environment": "未验证",
-      "group": "未验证"
+      "group": "受阻"
     },
     {
       "brand": "Spade Gaming",
-      "status": "仅回调地址可达",
-      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "status": "业务回调未启用",
+      "evidence": "07:43 实测 POST 返回 HTTP 503 / CALLBACK_CONTRACT_NOT_ACTIVE；测试玩家ID尚未创建，不能提交QA。",
       "environment": "未验证",
-      "group": "未验证"
+      "group": "受阻"
     },
     {
       "brand": "MICRO GAMING",
       "status": "待确认接口文档",
-      "evidence": "API、Token 地址及密钥已保存；公开 SingleWallet 文档读取失败，尚未实连清单。",
+      "evidence": "已有服务端配置；07:36再次读取官方SingleWallet文档，仍返回ERR_EMPTY_RESPONSE。清单未接通。",
       "environment": "Production / MYR",
       "group": "未验证"
     },
     {
       "brand": "VENUS GAMING",
       "status": "响应签名缺失",
-      "evidence": "v1.5.1 live；07:21实测HTTP502 / venus_response_signature_missing。厂家返回Code 0，但缺少文档要求的响应签名头，未计入成功。",
+      "evidence": "07:42仍返回HTTP502 / venus_response_signature_missing；未放行缺少签名头的清单。",
       "environment": "Production / MYR",
       "group": "受阻"
     },
@@ -217,7 +217,76 @@
     "depositButton": "Published to MASTER7 Site v93",
     "cashierUrl": "https://payment.vpay.club",
     "providerServerIp": "20.6.12.104",
-    "automaticCrediting": false
+    "automaticCrediting": false,
+    "traderId": "3647",
+    "gatewayUrl": "https://gateway.vpay.club",
+    "configured": false,
+    "callbackUrls": {
+      "payment": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
+      "withdrawal": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal"
+    },
+    "depositProvider": "vpay",
+    "withdrawalProvider": "vpay",
+    "configurationUpdatedAt": "2026-10-12T23:48:24+00:00"
   },
-  "productionQa": "Not complete; no QA credentials or success claim issued"
+  "productionQa": "Not complete; no QA credentials or success claim issued",
+  "frontendCatalogue": {
+    "siteVersion": 94,
+    "sourceCommit": "a60a1600af89b9889cb52d6faaf9b4e0909ed8e0",
+    "deployed": true,
+    "browserVerified": false,
+    "jiliGameCount": 291,
+    "kissH5GameCount": 91,
+    "gameLaunchAvailable": false
+  },
+  "callbacks": [
+    {
+      "provider": "Cosmoplay",
+      "type": "游戏",
+      "url": "https://master7-integration-gateway.onrender.com/callbacks/cosmoplay",
+      "status": "POST 503；业务未启用",
+      "testId": "尚未创建",
+      "checkedAt": "2026-10-13 07:43 MYT"
+    },
+    {
+      "provider": "Creative Gaming",
+      "type": "游戏",
+      "url": "https://master7-integration-gateway.onrender.com/callbacks/creative-gaming",
+      "status": "POST 503；业务未启用",
+      "testId": "尚未创建",
+      "checkedAt": "2026-10-13 07:43 MYT"
+    },
+    {
+      "provider": "PGSOFT",
+      "type": "游戏",
+      "url": "https://master7-integration-gateway.onrender.com/callbacks/pgsoft",
+      "status": "POST 503；业务未启用",
+      "testId": "尚未创建",
+      "checkedAt": "2026-10-13 07:43 MYT"
+    },
+    {
+      "provider": "Spade Gaming",
+      "type": "游戏",
+      "url": "https://master7-integration-gateway.onrender.com/callbacks/spade-gaming",
+      "status": "POST 503；业务未启用",
+      "testId": "尚未创建",
+      "checkedAt": "2026-10-13 07:43 MYT"
+    },
+    {
+      "provider": "VPay",
+      "type": "充值",
+      "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/payment",
+      "status": "GET可达；configured=false",
+      "testId": "不适用（支付回调）",
+      "checkedAt": "2026-10-13 07:42 MYT"
+    },
+    {
+      "provider": "VPay",
+      "type": "提款",
+      "url": "https://master7-integration-gateway.onrender.com/callbacks/vpay/withdrawal",
+      "status": "GET可达；configured=false",
+      "testId": "不适用（支付回调）",
+      "checkedAt": "2026-10-13 07:42 MYT"
+    }
+  ]
 }

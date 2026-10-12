@@ -1,0 +1,133 @@
+{
+  "status": "not_ready_for_qa",
+  "currency": "MYR",
+  "requiredBonusTypes": [
+    {
+      "type": "Free Spins",
+      "code": "36966",
+      "status": "待实现与厂家QA",
+      "reports": "PlayerFreespinGames、EntityFreeSpinTransactions、PlayerBonusTransactions"
+    },
+    {
+      "type": "Golden Chips",
+      "code": "36967",
+      "status": "待实现与厂家QA",
+      "reports": "PlayerBonus、PlayerBonusTransactions、EntityBonusTransaction"
+    },
+    {
+      "type": "Cash Bonus",
+      "code": "36965",
+      "status": "待实现与厂家QA",
+      "reports": "PlayerBonus、PlayerBonusTransactions、EntityBonusTransaction"
+    }
+  ],
+  "requiredFreeSpinGames": [
+    {
+      "name": "POP Gummy Giga Match (RubyPlay)",
+      "gameCode": "pop_fe5b5bb8_rbp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Immortal Ways Lady Moon (RubyPlay)",
+      "gameCode": "pop_b0067ed7_rbp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Goood Heavens™ POP (GPAS)",
+      "gameCode": "gpas_gdhvns_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Cash Truck 3 Turbo (Quickspin)",
+      "gameCode": "pop_10f85cb5_qsp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Diamond Rise™ POP (GPAS)",
+      "gameCode": "gpas_drise_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Brawler’s Bar (Quickspin)",
+      "gameCode": "pop_9d921557_qsp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Diamond Explosion 7s (RubyPlay)",
+      "gameCode": "pop_eacf1531_rbp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Go High Panda (RubyPlay)",
+      "gameCode": "pop_208f7707_rbp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Lucky Bass: Mega Cash Collect™ POP (GPAS)",
+      "gameCode": "gpas_lbmcc_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Wins of Fortune (Quickspin)",
+      "gameCode": "pop_winsfortune_qsp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Arowanas Luck™ POP (GPAS)",
+      "gameCode": "gpas_aluck_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Sahara Riches: Cash Collect™ POP (GPAS)",
+      "gameCode": "gpas_ccsahara_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Leprechaun’s Luck: Cash Collect™ POP (GPAS)",
+      "gameCode": "gpas_ccluck_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "POP Sakura Fortune Epic Bloom (Quickspin)",
+      "gameCode": "pop_f6d36d30_qsp",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Mighty Hat: Lamp of Gold™ POP (GPAS)",
+      "gameCode": "gpas_gwish_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Fire Blaze: Fire Fighter™ POP (GPAS)",
+      "gameCode": "gpas_ffighter_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Golden Macaque™ POP (GPAS)",
+      "gameCode": "gpas_gmacaque_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Fire Blaze: Green Wizard™ POP (GPAS)",
+      "gameCode": "gpas_gwizard_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Blue Wizard™ POP (GPAS)",
+      "gameCode": "gpas_bwizard_pop",
+      "status": "待厂家清单及Free Spins验证"
+    },
+    {
+      "name": "Fire Blaze: Red Wizard™ POP (GPAS)",
+      "gameCode": "gpas_rwizard_pop",
+      "status": "待厂家清单及Free Spins验证"
+    }
+  ],
+  "blockers": [
+    "Client certificate has not been installed",
+    "Authentication contract is not verified",
+    "Customer game launch and bonus integration are incomplete",
+    "QA test player has not been created",
+    "Provider QA has not been submitted or passed"
+  ]
+}

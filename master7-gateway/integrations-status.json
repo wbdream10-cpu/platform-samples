@@ -1,0 +1,223 @@
+{
+  "asOf": "2026-10-12T23:21:57Z",
+  "scope": "Catalogue integration only; one upstream supplier, multiple brands",
+  "connections": [
+    {
+      "brand": "MegaH5",
+      "status": "已取得清单",
+      "evidence": "166 个游戏，166 个唯一游戏代码；本次 HTTP 200 / Status 200。",
+      "environment": "UAT",
+      "group": "已验证"
+    },
+    {
+      "brand": "EVO888H5",
+      "status": "厂家拒绝",
+      "evidence": "本次 code 130；厂家提示 IP address is not in whitelist。 本次重新收到同名资料，未重复建项。",
+      "environment": "生产资料；网关整体标记 UAT",
+      "group": "受阻"
+    },
+    {
+      "brand": "CLOTPLAY",
+      "status": "厂家拒绝",
+      "evidence": "清单代码已部署；本次上游 HTTP 403，网关 HTTP 502。",
+      "environment": "Production",
+      "group": "受阻"
+    },
+    {
+      "brand": "EPICWIN",
+      "status": "厂家拒绝",
+      "evidence": "Normal、Free 配置已保存、代码已上线；两组实测均为上游HTTP 403。",
+      "environment": "Production",
+      "group": "受阻"
+    },
+    {
+      "brand": "918KISSH5",
+      "status": "已取得清单",
+      "evidence": "MYR 1:1、MY1 1:100 各91个；Free 87个。三组均HTTP 200，合并去重91个。",
+      "environment": "Production / MYR、MY1",
+      "group": "已验证"
+    },
+    {
+      "brand": "MEGA888",
+      "status": "资料已收到",
+      "evidence": "已有商户及后台资料，尚无已成功读取清单的证据。",
+      "environment": "MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "PEGASUS",
+      "status": "资料已检查",
+      "evidence": "已读 API 资料表；尚未取得可执行清单接口规则并验证。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "BT GAMING",
+      "status": "资料已收到",
+      "evidence": "已有 API 地址及对接资料；清单接口未实测。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "MEGAWINS",
+      "status": "待取得 KEY",
+      "evidence": "已有站点、商户及后台地址；未登录，三把 KEY 未下载。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "JILI",
+      "status": "已取得清单",
+      "evidence": "1:1 与 1:100 正式地址均返回 HTTP 200；各293条，内容相同，含2个大厅入口。",
+      "environment": "Production / MYR 1:1、1:100",
+      "group": "已验证"
+    },
+    {
+      "brand": "AWC",
+      "status": "文档不可访问",
+      "evidence": "本次收到NO LIMIT CITY、SEXY BACCARAT、SV388同一组AWC资料；文档链接返回404 / 无权限，未取得清单。",
+      "environment": "Production",
+      "group": "未验证"
+    },
+    {
+      "brand": "Lion King",
+      "status": "历史文件已找到",
+      "evidence": "交接记录列有资料表；API 契约完整性及清单未验证。",
+      "environment": "未验证",
+      "group": "未验证"
+    },
+    {
+      "brand": "Cosmoplay",
+      "status": "仅回调地址可达",
+      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "environment": "未验证",
+      "group": "未验证"
+    },
+    {
+      "brand": "Creative Gaming",
+      "status": "仅回调地址可达",
+      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "environment": "未验证",
+      "group": "未验证"
+    },
+    {
+      "brand": "PGSOFT",
+      "status": "仅回调地址可达",
+      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "environment": "未验证",
+      "group": "未验证"
+    },
+    {
+      "brand": "Spade Gaming",
+      "status": "仅回调地址可达",
+      "evidence": "历史记录为回调 GET 200；不代表已取得游戏清单。",
+      "environment": "未验证",
+      "group": "未验证"
+    },
+    {
+      "brand": "MICRO GAMING",
+      "status": "待确认接口文档",
+      "evidence": "API、Token 地址及密钥已保存；公开 SingleWallet 文档读取失败，尚未实连清单。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "VENUS GAMING",
+      "status": "响应签名缺失",
+      "evidence": "v1.5.1 live；07:21实测HTTP502 / venus_response_signature_missing。厂家返回Code 0，但缺少文档要求的响应签名头，未计入成功。",
+      "environment": "Production / MYR",
+      "group": "受阻"
+    },
+    {
+      "brand": "LFC888",
+      "status": "待确认接口文档",
+      "evidence": "API和服务端配置已保存；清单方法与签名规则尚未确认。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "SPRIBE",
+      "status": "待确认接口文档",
+      "evidence": "JDB地址、DC、IV、KEY已保存；清单协议尚未确认。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "SABA SPORTS",
+      "status": "待确认接口文档",
+      "evidence": "已保存商户配置；用户提供HTTP地址，HTTPS与体育清单协议尚未验证。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "CRAZY GAMING",
+      "status": "待确认接口文档",
+      "evidence": "Transfer资料、API与服务端密钥已保存；清单协议尚未确认。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "PLAYTECH",
+      "status": "对接未完成",
+      "evidence": "MYR配置已保存；Bonus文档已读取，证书未安装；三类Bonus、报表、20个指定游戏及厂家QA均未完成。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "IBEX",
+      "status": "待确认API地址",
+      "evidence": "Operator与服务端密钥已保存；尚未取得API地址和接口文档。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "FACHAI",
+      "status": "待确认接口文档",
+      "evidence": "API地址与密钥已保存；清单协议尚未确认。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "MARIO",
+      "status": "待确认API地址",
+      "evidence": "账号和API密钥已保存；目前仅有后台地址，尚未取得API地址和文档。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "T1 GAMING",
+      "status": "待读取后台文档",
+      "evidence": "Merchant、Secure、Sign配置已保存；接口资料位于BO > Account > Access Information，尚未读取。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "GW99",
+      "status": "待确认API地址",
+      "evidence": "Merchant与API Key已保存；目前仅有后台地址，接口文档尚未取得。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "EVO888",
+      "status": "待确认接口文档",
+      "evidence": "与EVO888H5分别记录；账号与两段API资料已保存，未猜测拼接方式，清单未实连。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    },
+    {
+      "brand": "HUAWEI",
+      "status": "待确认接口文档",
+      "evidence": "已收到网站、下载入口及账号；没有已确认的清单API与签名规则。",
+      "environment": "Production / MYR",
+      "group": "未验证"
+    }
+  ],
+  "payment": {
+    "depositButton": "Published to MASTER7 Site v93",
+    "cashierUrl": "https://payment.vpay.club",
+    "providerServerIp": "20.6.12.104",
+    "automaticCrediting": false
+  },
+  "productionQa": "Not complete; no QA credentials or success claim issued"
+}

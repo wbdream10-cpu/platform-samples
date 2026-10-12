@@ -4,7 +4,7 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
 
-const VERSION = '1.0.0';
+const VERSION = '1.2.0';
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
 
 function cleanBase(value, fallback) {
@@ -39,6 +39,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   const vpayTraderId = String(env.VPAY_TRADER_ID || '').trim();
   const vpayApiToken = String(env.VPAY_API_TOKEN || '').trim();
   const vpayTimeZone = String(env.VPAY_TIME_ZONE || 'Asia/Kuala_Lumpur');
+  const clotplayBase = cleanBase(env.CLOTPLAY_BASE_URL, 'https://api.coldboxservice.com/api/MOGI');
+  const clotplayToken = String(env.CLOTPLAY_OPERATOR_TOKEN || '').trim();
   const cache = new Map();
 
   function headers(extra = {}) {
@@ -186,6 +188,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           endpoints: {
             megah5Games: `${base}/providers/megah5/games`,
             evo888h5Games: `${base}/providers/evo888h5/games`,
+            clotplayGames: `${base}/providers/clotplay/games`,
             vpayStatus: `${base}/providers/vpay/status`,
             callbacks: `${base}/callbacks`,
           },
@@ -202,6 +205,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           configured: {
             evo888h5: Boolean(env.EVO_API_TOKEN),
             megah5: Boolean(env.MEGA_OPERATOR_ID && env.MEGA_SECRET_KEY),
+            clotplay: Boolean(clotplayToken),
             vpay: Boolean(vpayTraderId && vpayApiToken),
           },
           callbackUrls: callbackUrls(),
@@ -218,6 +222,40 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const result = await cached('mega-games', () => mega('GetGameList', { Lang: 'en-us', Currency: currency }));
         const providerOK = Number(result.data && result.data.Status) === 200;
         return send(res, result.ok && providerOK ? 200 : 502, { provider: 'megah5', upstreamStatus: result.status, result: result.data }, cors);
+      }
+
+      if (req.method === 'GET' && url.pathname === '/providers/clotplay/games') {
+        const page = url.searchParams.get('page') || '1';
+        if (!/^[1-9]\d{0,5}$/.test(page)) return send(res, 400, { error: 'invalid_page' }, cors);
+        if (!clotplayToken) return send(res, 503, { error: 'clotplay_not_configured' }, cors);
+        const result = await upstream(`${clotplayBase}/get-game-list?per_page=100&page=${page}`, {
+          headers: { Accept: 'application/json', Authorization: clotplayToken },
+        });
+        if (!result.ok || !Array.isArray(result.data && result.data.data)) {
+          return send(res, 502, { error: 'clotplay_catalogue_failed', upstreamStatus: result.status }, cors);
+        }
+        // Project public catalogue fields only; never forward authentication or member data.
+        const games = result.data.data.map(game => ({
+          gameCode: String(game.slug || ''),
+          name: String(game.name || ''),
+          nameZh: String(game.name_cn || ''),
+          category: String(game.category || ''),
+          maintenance: Number(game.is_maintenance) === 1,
+          thumbnails: Object.fromEntries(['en', 'cn', 'th'].map(lang => [
+            lang, Object.fromEntries(['square', 'portrait'].map(shape => {
+              const value = game.thumbnails?.[lang]?.[shape];
+              return [shape, typeof value === 'string' && value.startsWith('https://') ? value : null];
+            })),
+          ])),
+        }));
+        const pagination = result.data.pagination || {};
+        return send(res, 200, {
+          provider: 'clotplay',
+          games,
+          pagination: Object.fromEntries(['current_page', 'last_page', 'per_page', 'total'].map(key => [
+            key, Number.isSafeInteger(pagination[key]) && pagination[key] >= 0 ? pagination[key] : null,
+          ])),
+        }, cors);
       }
 
       if (req.method === 'GET' && url.pathname === '/callbacks') {

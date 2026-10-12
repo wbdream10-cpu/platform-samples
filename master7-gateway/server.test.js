@@ -76,3 +76,38 @@ test('callback URLs are reachable but do not accept unsigned events', async () =
   const event = await run(handler, '/callbacks/pgsoft/Bet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(event.status, 503);
 });
+
+
+test('CLOTPLAY catalogue uses documented auth, pagination and excludes private fields', async () => {
+  let request;
+  const fetchImpl = async (url, options) => {
+    request = { url, options };
+    return new Response(JSON.stringify({ data: [{slug:'sample', name:'Sample', name_cn:'样板', is_maintenance:1, secret:'hidden', thumbnails:{en:{square:'https://example.test/a.png',portrait:'http://example.test/b.png'}}}], pagination:{current_page:2,last_page:3,per_page:100,total:201}, token:'hidden' }));
+  };
+  const res = await run(makeApp({env:{CLOTPLAY_OPERATOR_TOKEN:'private-token'},fetchImpl}), '/providers/clotplay/games?page=2');
+  const data = await res.json();
+  assert.equal(res.status,200);
+  assert.ok(request.url.endsWith('/get-game-list?per_page=100&page=2'));
+  assert.equal(request.options.headers.Authorization,'private-token');
+  assert.equal(request.options.body,undefined);
+  assert.equal(data.games[0].maintenance,true);
+  assert.equal(data.games[0].thumbnails.en.portrait,null);
+  assert.equal(data.pagination.total,201);
+  assert.ok(!JSON.stringify(data).includes('hidden'));
+  assert.ok(!JSON.stringify(data).includes('private-token'));
+});
+test('CLOTPLAY rejects missing configuration and bad pages without upstream calls', async () => {
+  let calls=0;
+  const fetchImpl=async()=>{calls++;throw new Error('unexpected');};
+  assert.equal((await run(makeApp({env:{},fetchImpl}),'/providers/clotplay/games')).status,503);
+  for (const page of ['0','-1','2x','9999999']) {
+    assert.equal((await run(makeApp({env:{CLOTPLAY_OPERATOR_TOKEN:'token'},fetchImpl}),'/providers/clotplay/games?page='+page)).status,400);
+  }
+  assert.equal(calls,0);
+});
+test('CLOTPLAY upstream failure does not leak response credentials', async () => {
+  const fetchImpl=async()=>new Response(JSON.stringify({secret:'hidden'}),{status:403});
+  const res=await run(makeApp({env:{CLOTPLAY_OPERATOR_TOKEN:'token'},fetchImpl}),'/providers/clotplay/games');
+  assert.equal(res.status,502);
+  assert.deepEqual(await res.json(),{error:'clotplay_catalogue_failed',upstreamStatus:403});
+});

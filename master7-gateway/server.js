@@ -2,6 +2,7 @@
 
 const http = require('node:http');
 const crypto = require('node:crypto');
+const { verifyVpayNotification, vpaySignature } = require('./vpay');
 
 const VERSION = '1.0.0';
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
@@ -34,6 +35,10 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   const allowedOrigin = cleanBase(env.ALLOWED_ORIGIN, 'https://www.master7.vip');
   const evoBase = cleanBase(env.EVO_BASE_URL, 'https://api.evo888h5.com');
   const megaBase = cleanBase(env.MEGA_BASE_URL, 'https://smakermicsvc.back138.com/api/opgateway/v1/op');
+  const vpayBase = cleanBase(env.VPAY_BASE_URL, 'https://gateway.vpay.club');
+  const vpayTraderId = String(env.VPAY_TRADER_ID || '').trim();
+  const vpayApiToken = String(env.VPAY_API_TOKEN || '').trim();
+  const vpayTimeZone = String(env.VPAY_TIME_ZONE || 'Asia/Kuala_Lumpur');
   const cache = new Map();
 
   function headers(extra = {}) {
@@ -50,6 +55,15 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   function send(res, status, body, extraHeaders) {
     res.writeHead(status, headers(extraHeaders));
     res.end(JSON.stringify(body));
+  }
+
+  function sendText(res, status, value) {
+    res.writeHead(status, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    res.end(String(value));
   }
 
   function isAdmin(req) {
@@ -126,9 +140,25 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
     });
   }
 
+  async function vpay(action, fields = {}) {
+    if (!vpayTraderId || !vpayApiToken) return { ok: false, status: 503, data: { code: 'VPAY_NOT_CONFIGURED' } };
+    const timestamp = Math.floor(now().getTime() / 1000);
+    const payload = { action, trader_id: vpayTraderId, ...fields };
+    payload.sign = vpaySignature(payload, vpayApiToken, timestamp, vpayTimeZone);
+    return upstream(`${vpayBase}/app/v1/trader/rest?t=${timestamp}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }
+
   function callbackUrls() {
     const base = publicBase || 'https://SERVICE-URL';
-    return Object.fromEntries(PROVIDERS.map(name => [name, `${base}/callbacks/${name}`]));
+    return {
+      ...Object.fromEntries(PROVIDERS.map(name => [name, `${base}/callbacks/${name}`])),
+      vpayPayment: `${base}/callbacks/vpay/payment`,
+      vpayWithdrawal: `${base}/callbacks/vpay/withdrawal`,
+    };
   }
 
   return async function handler(req, res) {
@@ -156,6 +186,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           endpoints: {
             megah5Games: `${base}/providers/megah5/games`,
             evo888h5Games: `${base}/providers/evo888h5/games`,
+            vpayStatus: `${base}/providers/vpay/status`,
             callbacks: `${base}/callbacks`,
           },
         }, cors);
@@ -171,6 +202,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           configured: {
             evo888h5: Boolean(env.EVO_API_TOKEN),
             megah5: Boolean(env.MEGA_OPERATOR_ID && env.MEGA_SECRET_KEY),
+            vpay: Boolean(vpayTraderId && vpayApiToken),
           },
           callbackUrls: callbackUrls(),
         }, cors);
@@ -198,6 +230,53 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         return send(res, result.ok && ip ? 200 : 502, { ok: Boolean(result.ok && ip), ip });
       }
 
+      if (req.method === 'GET' && url.pathname === '/providers/vpay/status') {
+        return send(res, 200, {
+          provider: 'vpay',
+          configured: Boolean(vpayTraderId && vpayApiToken),
+          mode: String(env.VPAY_MODE || 'uat'),
+          gateway: vpayBase,
+          callbackUrls: {
+            payment: callbackUrls().vpayPayment,
+            withdrawal: callbackUrls().vpayWithdrawal,
+          },
+        }, cors);
+      }
+
+      const vpayCallbackMatch = url.pathname.match(/^\/callbacks\/vpay\/(payment|withdrawal)$/);
+      if (vpayCallbackMatch && req.method === 'GET') {
+        return send(res, 200, {
+          ok: true,
+          provider: 'vpay',
+          callback: vpayCallbackMatch[1],
+          configured: Boolean(vpayTraderId && vpayApiToken),
+          currency,
+        });
+      }
+      if (vpayCallbackMatch && req.method === 'POST') {
+        if (!vpayTraderId || !vpayApiToken) return send(res, 503, { error: 'vpay_not_configured' });
+        const payload = await body(req);
+        if (String(payload.trader_id || '') !== vpayTraderId || !verifyVpayNotification(payload, vpayApiToken)) {
+          return send(res, 401, { error: 'invalid_vpay_signature' });
+        }
+        const forwardUrl = vpayCallbackMatch[1] === 'payment'
+          ? String(env.VPAY_PAYMENT_FORWARD_URL || '')
+          : String(env.VPAY_WITHDRAWAL_FORWARD_URL || '');
+        if (!forwardUrl) return send(res, 503, { error: 'platform_wallet_callback_not_configured' });
+        const forward = await upstream(forwardUrl, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json,text/plain',
+            'Content-Type': 'application/json',
+            ...(env.PLATFORM_CALLBACK_TOKEN ? { Authorization: `Bearer ${env.PLATFORM_CALLBACK_TOKEN}` } : {}),
+          },
+          body: JSON.stringify(payload),
+        });
+        return forward.ok
+          ? sendText(res, 200, 'SUCCESS')
+          : send(res, 502, { error: 'platform_wallet_callback_failed' });
+      }
+
       const callbackMatch = url.pathname.match(/^\/callbacks\/(cosmoplay|creative-gaming|pgsoft|spade-gaming)(?:\/([A-Za-z0-9_-]+))?$/);
       if (callbackMatch && req.method === 'GET') {
         return send(res, 200, { ok: true, provider: callbackMatch[1], callback: 'reachable', currency });
@@ -205,6 +284,111 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
       if (callbackMatch && req.method === 'POST') {
         await body(req);
         return send(res, 503, { ok: false, provider: callbackMatch[1], code: 'CALLBACK_CONTRACT_NOT_ACTIVE' });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/admin/vpay/order') {
+        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+        if (String(env.VPAY_ORDERS_ENABLED || '').toLowerCase() !== 'true') {
+          return send(res, 503, { error: 'vpay_orders_disabled' });
+        }
+        const payload = await body(req);
+        const outTradeNo = String(payload.outTradeNo || '');
+        const title = String(payload.title || '');
+        const amount = String(payload.amount || '');
+        const tradeCode = String(payload.tradeCode || '');
+        const payerName = String(payload.payerName || '');
+        if (!/^[A-Za-z0-9_-]{1,50}$/.test(outTradeNo) || !/^\d{1,7}(?:\.\d{1,2})?$/.test(amount)
+          || !['1', '2', '3', '4', '5', '7'].includes(tradeCode)
+          || title.length < 1 || title.length > 100 || payerName.length < 1 || payerName.length > 30) {
+          return send(res, 400, { error: 'invalid_vpay_order' });
+        }
+        const result = await vpay('TRADER_ORDER', {
+          title,
+          out_trade_no: outTradeNo,
+          amount,
+          trade_code: tradeCode,
+          payer_name: payerName,
+          notify_url: callbackUrls().vpayPayment,
+          callback_url: String(env.VPAY_RETURN_URL || env.REDIRECT_URL || 'https://www.master7.vip'),
+        });
+        const providerOK = Number(result.data && result.data.code) === 0;
+        return send(res, result.ok && providerOK ? 200 : 502, {
+          provider: 'vpay',
+          upstreamStatus: result.status,
+          result: result.data,
+        });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/admin/vpay/order-query') {
+        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+        const payload = await body(req);
+        const outTradeNo = String(payload.outTradeNo || '');
+        if (!/^[A-Za-z0-9_-]{1,50}$/.test(outTradeNo)) return send(res, 400, { error: 'invalid_out_trade_no' });
+        const result = await vpay('ORDER_GET', { out_trade_no: outTradeNo });
+        const providerOK = Number(result.data && result.data.code) === 0;
+        return send(res, result.ok && providerOK ? 200 : 502, {
+          provider: 'vpay',
+          upstreamStatus: result.status,
+          result: result.data,
+        });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/admin/vpay/balance') {
+        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+        const result = await vpay('TRADER_BALANCE');
+        const providerOK = Number(result.data && result.data.code) === 0;
+        return send(res, result.ok && providerOK ? 200 : 502, {
+          provider: 'vpay',
+          upstreamStatus: result.status,
+          result: result.data,
+        });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/admin/vpay/withdrawal') {
+        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+        if (String(env.VPAY_WITHDRAWALS_ENABLED || '').toLowerCase() !== 'true') {
+          return send(res, 503, { error: 'vpay_withdrawals_disabled' });
+        }
+        const payload = await body(req);
+        const amount = String(payload.amount || '');
+        const bankName = String(payload.bankName || '');
+        const accountName = String(payload.accountName || '');
+        const accountNumber = String(payload.accountNumber || '');
+        const refId = String(payload.refId || '');
+        if (!/^\d{1,7}(?:\.\d{1,2})?$/.test(amount) || !/^[A-Za-z0-9]{2,10}$/.test(bankName)
+          || accountName.length < 1 || accountName.length > 100 || !/^[A-Za-z0-9-]{4,40}$/.test(accountNumber)
+          || !/^[A-Za-z0-9_-]{1,50}$/.test(refId)) {
+          return send(res, 400, { error: 'invalid_vpay_withdrawal' });
+        }
+        const result = await vpay('MONEY_OUT', {
+          amount,
+          bank_name: bankName,
+          acc_name: accountName,
+          acc_no: accountNumber,
+          ...(payload.openBankName ? { open_bank_name: String(payload.openBankName) } : {}),
+          ref_id: refId,
+          notify_url: callbackUrls().vpayWithdrawal,
+        });
+        const providerOK = Number(result.data && result.data.code) === 0;
+        return send(res, result.ok && providerOK ? 200 : 502, {
+          provider: 'vpay',
+          upstreamStatus: result.status,
+          result: result.data,
+        });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/admin/vpay/withdrawal-query') {
+        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+        const payload = await body(req);
+        const outMoneyId = String(payload.outMoneyId || '');
+        if (!/^[A-Za-z0-9_-]{1,50}$/.test(outMoneyId)) return send(res, 400, { error: 'invalid_out_money_id' });
+        const result = await vpay('MONEY_GET', { out_money_id: outMoneyId });
+        const providerOK = Number(result.data && result.data.code) === 0;
+        return send(res, result.ok && providerOK ? 200 : 502, {
+          provider: 'vpay',
+          upstreamStatus: result.status,
+          result: result.data,
+        });
       }
 
       if (req.method === 'POST' && url.pathname === '/admin/evo888h5/player') {

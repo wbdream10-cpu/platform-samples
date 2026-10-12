@@ -161,7 +161,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
 
       if (req.method === 'GET' && url.pathname === '/providers/evo888h5/games') {
         const result = await cached('evo-games', () => evo('/game/list'));
-        return send(res, result.ok ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data }, cors);
+        const providerOK = Number(result.data && result.data.code) === 0;
+        return send(res, result.ok && providerOK ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data }, cors);
       }
 
       if (req.method === 'GET' && url.pathname === '/providers/megah5/games') {
@@ -172,6 +173,12 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
 
       if (req.method === 'GET' && url.pathname === '/callbacks') {
         return send(res, 200, { currency, callbackUrls: callbackUrls() }, cors);
+      }
+
+      if (req.method === 'GET' && url.pathname === '/diagnostics/egress-ip') {
+        const result = await upstream('https://api64.ipify.org?format=json', { headers: { Accept: 'application/json' } });
+        const ip = result.data && typeof result.data.ip === 'string' ? result.data.ip : null;
+        return send(res, result.ok && ip ? 200 : 502, { ok: Boolean(result.ok && ip), ip });
       }
 
       const callbackMatch = url.pathname.match(/^\/callbacks\/(cosmoplay|creative-gaming|pgsoft|spade-gaming)(?:\/([A-Za-z0-9_-]+))?$/);

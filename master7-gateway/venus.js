@@ -57,13 +57,17 @@ async function venusCatalogue({ env, fetchImpl = global.fetch, now = () => new D
     if (!response.ok) fail(`venus_upstream_http_${response.status}`);
     let data;
     try { data = await response.json(); } catch { fail('venus_invalid_response'); }
+    if (data.Code !== 0) {
+      const code = Number.isSafeInteger(data.Code) ? `_${data.Code}` : '';
+      fail(`venus_provider_rejected${code}`);
+    }
     const receivedTs = response.headers.get('x-ts') || '';
     const receivedSign = response.headers.get('x-sign') || '';
+    if (!receivedTs || !receivedSign) fail('venus_response_signature_missing');
     if (!/^\d{13}$/.test(receivedTs) || Math.abs(Number(receivedTs) - now().getTime()) > 300000) fail('venus_invalid_response_timestamp');
     const expected = Buffer.from(venusSignature(data, receivedTs, secret));
     const actual = Buffer.from(receivedSign);
     if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) fail('venus_invalid_response_signature');
-    if (data.Code !== 0) fail('venus_provider_rejected');
     // The manual's schema uses Value.Games/Total, but its example uses Value[].
     const rows = Array.isArray(data.Value) ? data.Value : data.Value?.Games;
     const total = Array.isArray(data.Value) ? undefined : data.Value?.Total;

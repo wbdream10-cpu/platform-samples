@@ -39,7 +39,8 @@ test('VENUS rejects missing credentials, insecure origin and signed/malformed fa
   await assert.rejects(venusCatalogue({ env: {}, now }), /venus_not_configured/);
   await assert.rejects(venusCatalogue({ env: { ...env, VENUS_BASE_URL: 'http://provider.test' }, now }), /venus_invalid_configuration/);
   const failures = [
-    [() => new Response('{}'), /venus_invalid_response_timestamp/],
+    [() => new Response('{}'), /venus_provider_rejected/],
+    [() => new Response(JSON.stringify({ Code: 0, Value: [] })), /venus_response_signature_missing/],
     [() => signed({ Code: 0, Value: [] }, 'wrong'), /venus_invalid_response_signature/],
     [() => signed({ Code: 42, Value: [] }), /venus_provider_rejected/],
     [() => signed({ Code: 0, Value: { Total: 2, Games: [game(1)] } }), /venus_incomplete_catalogue/],

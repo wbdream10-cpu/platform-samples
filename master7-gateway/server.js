@@ -6,7 +6,7 @@ const { verifyVpayNotification, vpaySignature } = require('./vpay');
 const { jiliCatalogueBody } = require('./jili');
 const { venusCatalogue } = require('./venus');
 
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
 
 function cleanBase(value, fallback) {

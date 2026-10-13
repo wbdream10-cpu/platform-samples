@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-10-13T01:38:22.275Z",
+  "siteVersion": 100,
+  "sourceCommit": "cd82320db8afc7926a5fe40fc99ac008a99a0783",
+  "changes": {
+    "indicators": "Green = on; grey unlit = off",
+    "surfaces": [
+      "customer front",
+      "owner and staff admin",
+      "credential vault",
+      "setup",
+      "support",
+      "tasks"
+    ],
+    "sourceOfState": "Existing disabled/aria-disabled/feature flags; known unavailable player financial/auth actions remain off",
+    "doesNotEnableServices": true
+  },
+  "validation": {
+    "availabilityCases": 18,
+    "playerChecks": true,
+    "vaultChecks": 40,
+    "productionBuild": true,
+    "browserVisualQA": false,
+    "existingUiSuite": "Published FAQ assertion fails in both unchanged v99 baseline and updated source"
+  },
+  "deployment": {
+    "id": "appgdep_6acd8b3626648191856244ecb0ecb884",
+    "project_id": "appgprj_6abcd530747c81918fb5411fc42b24b3",
+    "title": "Master7",
+    "version_id": "appgprj_6abcd530747c81918fb5411fc42b24b3~appgver_4a18ffa570c8819198df02d0775727fc",
+    "type": "publish",
+    "status": "succeeded",
+    "url": "https://white-label-platform-shell.wbdream10.chatgpt.site",
+    "has_mcp": true,
+    "screenshot_asset_pointer": null,
+    "provider_deployment_id": "site---6abcd530747c81918fb5411fc42b24b3",
+    "failure_message": null,
+    "env_set_revision": 7,
+    "updated_at": "2026-10-13T01:37:11.875801+00:00"
+  }
+}

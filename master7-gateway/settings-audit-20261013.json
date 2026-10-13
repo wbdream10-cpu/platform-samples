@@ -37,7 +37,31 @@
       "passed": 31,
       "failed": 0
     },
-    "productionDeployment": "pending"
+    "productionDeployment": {
+      "status": "live",
+      "id": "dep-db6q0259fdbs73dt37m0",
+      "commit": "c4c0fd16062713426e3f1bd83034fc68619ad756",
+      "finishedAt": "2026-10-13T03:06:13.076095Z"
+    },
+    "autoDeployObserved": false,
+    "deploymentNote": "No deployment for the pushed commit appeared on repeated checks despite autoDeploy=yes. One manual deployment was triggered and verified live.",
+    "productionChecks": {
+      "healthStatus": 200,
+      "version": "1.6.0",
+      "mode": "uat",
+      "corsPreflight": {
+        "https://www.master7.vip": 204,
+        "https://www.master7.best": 204,
+        "https://admin.master7.best": 204,
+        "https://www.master7.best.attacker.test": 403
+      },
+      "exactOriginHeadersVerified": true,
+      "vpay": {
+        "configured": true,
+        "mode": "uat",
+        "transactionQaPassed": false
+      }
+    }
   },
   "otherRenderServices": [
     {
@@ -98,8 +122,23 @@
   "limits": [
     "Render metrics returned no datapoints; CPU and memory usage unverified.",
     "Cloudflare account rules were not accessible; no crawler settings changed.",
-    "Gateway transport requests timed out during initial direct checks.",
     "Game launch, member accounts, automatic crediting, withdrawals and bonus settlement are not completed by this release.",
     "Legacy failed services were inspected but not deleted or restarted."
-  ]
+  ],
+  "completedAt": "2026-10-13T03:07:46.686Z",
+  "newProviderIntake": {
+    "providers": [
+      "QUICKSPIN",
+      "ASTAR",
+      "ALLBET"
+    ],
+    "serverCredentialsSaved": true,
+    "secretsCommitted": false,
+    "apiDocumentationIncludedInWorkbooks": false,
+    "unauthenticatedHttpsProbe": {
+      "https://gsmd.336699bet.com": "HTTP 200 with GSC-404-Path Not Specified; not an API method validation",
+      "https://fetch.336699bet.com": "HTTP 502"
+    },
+    "catalogueVerified": false
+  }
 }

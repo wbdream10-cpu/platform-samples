@@ -1,0 +1,83 @@
+{
+  "checkedAt": "2026-10-13T00:26:15.155386+00:00",
+  "anonymous": true,
+  "siteVersion": 96,
+  "sourceCommit": "99079da89feb2a4db594cfaba104f6a8bf33d033",
+  "publicUrl": "https://master7.best/",
+  "allPassed": true,
+  "browserVisualQa": false,
+  "checks": [
+    {
+      "url": "https://master7.best/",
+      "status": 200,
+      "passed": true,
+      "playerEntry": true
+    },
+    {
+      "url": "https://master7.best/api/player",
+      "status": 200,
+      "passed": true,
+      "catalogueProviders": [
+        "jili",
+        "918kissh5"
+      ],
+      "services": {
+        "memberLogin": false,
+        "payments": false,
+        "gameLaunch": false,
+        "ai": false,
+        "apk": false
+      }
+    },
+    {
+      "url": "https://master7.best/api/games?provider=jili",
+      "status": 200,
+      "passed": true,
+      "gameCount": 291,
+      "freshness": "published",
+      "checkedAt": "2026-10-13T00:22:46.181605+00:00",
+      "gameLaunchAvailable": false,
+      "uniqueIds": true,
+      "safeGameFields": true
+    },
+    {
+      "url": "https://master7.best/api/games?provider=918kissh5",
+      "status": 200,
+      "passed": true,
+      "gameCount": 91,
+      "freshness": "published",
+      "checkedAt": "2026-10-13T00:22:46.720208+00:00",
+      "gameLaunchAvailable": false,
+      "uniqueIds": true,
+      "safeGameFields": true
+    },
+    {
+      "url": "https://master7.best/api/control",
+      "status": 401,
+      "passed": true,
+      "error": "请先登录后再打开平台。"
+    },
+    {
+      "url": "https://master7.best/api/vault",
+      "status": 401,
+      "passed": true,
+      "error": "请先用已授权的 ChatGPT 账号登录后台。"
+    },
+    {
+      "url": "https://admin.master7.best/admin",
+      "status": 302,
+      "passed": true,
+      "location": "/signin-with-chatgpt?return_to=%2Fadmin"
+    }
+  ],
+  "siteProjectId": "appgprj_6abcd530747c81918fb5411fc42b24b3",
+  "deploymentId": "appgdep_6acd7a62d5348191a6866d6aeba8b02d",
+  "accessMode": "public",
+  "accessRevision": 8,
+  "notes": [
+    "The published read-only customer catalogue is independent of administrative rental expiry; private previews and paused tenants remain restricted.",
+    "Live refresh from the Site to the gateway returned 502 during verification. The frontend serves the provider-verified, sanitized publication with its original timestamp.",
+    "No member login, game launch, APK, payment or withdrawal workflow was enabled. No tenant expiry, wallet, administrative grants or secret was changed.",
+    "Browser/phone visual QA has not been performed."
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-12T23:51:14.410261+00:00",
+  "asOf": "2026-10-13T00:26:15.155386+00:00",
   "scope": "Catalogue integration only; one upstream supplier, multiple brands",
   "connections": [
     {
@@ -234,13 +234,22 @@
   },
   "productionQa": "Not complete; no QA credentials or success claim issued",
   "frontendCatalogue": {
-    "siteVersion": 94,
-    "sourceCommit": "a60a1600af89b9889cb52d6faaf9b4e0909ed8e0",
+    "siteVersion": 96,
+    "sourceCommit": "99079da89feb2a4db594cfaba104f6a8bf33d033",
     "deployed": true,
     "browserVerified": false,
     "jiliGameCount": 291,
     "kissH5GameCount": 91,
-    "gameLaunchAvailable": false
+    "gameLaunchAvailable": false,
+    "anonymousHttpVerified": true,
+    "publicUrl": "https://master7.best/",
+    "accessMode": "public",
+    "accessRevision": 8,
+    "checkedAt": "2026-10-13T00:26:15.155386+00:00",
+    "publishedSnapshotFallback": true,
+    "publishedCatalogueCheckedAt": "2026-10-13T00:22:46Z",
+    "liveRefreshVerified": false,
+    "adminAccessProtected": true
   },
   "callbacks": [
     {

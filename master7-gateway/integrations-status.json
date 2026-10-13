@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-13T00:26:15.155386+00:00",
+  "asOf": "2026-10-13T00:39:23.629260+00:00",
   "scope": "Catalogue integration only; one upstream supplier, multiple brands",
   "connections": [
     {
@@ -234,8 +234,8 @@
   },
   "productionQa": "Not complete; no QA credentials or success claim issued",
   "frontendCatalogue": {
-    "siteVersion": 96,
-    "sourceCommit": "99079da89feb2a4db594cfaba104f6a8bf33d033",
+    "siteVersion": 97,
+    "sourceCommit": "f9f789246089b6eac1dc6a0ed6dc4836ef0b9514",
     "deployed": true,
     "browserVerified": false,
     "jiliGameCount": 291,
@@ -245,11 +245,30 @@
     "publicUrl": "https://master7.best/",
     "accessMode": "public",
     "accessRevision": 8,
-    "checkedAt": "2026-10-13T00:26:15.155386+00:00",
+    "checkedAt": "2026-10-13T00:39:23.629260+00:00",
     "publishedSnapshotFallback": true,
     "publishedCatalogueCheckedAt": "2026-10-13T00:22:46Z",
     "liveRefreshVerified": false,
-    "adminAccessProtected": true
+    "adminAccessProtected": true,
+    "sponsoredFreeSection": {
+      "position": "first",
+      "gameCount": 87,
+      "providers": [
+        "918kissh5"
+      ],
+      "verifiedAccount": "free",
+      "checkedAt": "2026-10-13T00:30:11.293720+00:00"
+    },
+    "regularSection": {
+      "position": "after-sponsored",
+      "gameCount": 295,
+      "byProvider": {
+        "jili": 291,
+        "918kissh5": 4
+      },
+      "excludesSponsoredGames": true
+    },
+    "uniqueDisplayedGames": 382
   },
   "callbacks": [
     {

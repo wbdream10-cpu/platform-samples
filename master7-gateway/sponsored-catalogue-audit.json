@@ -1,0 +1,85 @@
+{
+  "checkedAt": "2026-10-13T00:39:23.629260+00:00",
+  "siteVersion": 97,
+  "sourceCommit": "f9f789246089b6eac1dc6a0ed6dc4836ef0b9514",
+  "publicUrl": "https://master7.best/",
+  "anonymous": true,
+  "browserVisualQa": false,
+  "allPassed": true,
+  "checks": [
+    {
+      "url": "https://master7.best/api/games?provider=918kissh5&section=sponsored",
+      "http": 200,
+      "gameCount": 87,
+      "section": "sponsored",
+      "account": "free",
+      "sponsorship": "provider-free-credit",
+      "checkedAt": "2026-10-13T00:30:11.293720+00:00",
+      "freshness": "published",
+      "passed": true
+    },
+    {
+      "url": "https://master7.best/api/games?provider=918kissh5&section=regular",
+      "http": 200,
+      "gameCount": 4,
+      "section": "regular",
+      "account": "normal",
+      "sponsorship": null,
+      "checkedAt": "2026-10-13T00:30:11.293Z",
+      "freshness": "published",
+      "passed": true
+    },
+    {
+      "url": "https://master7.best/api/games?provider=jili&section=regular",
+      "http": 200,
+      "gameCount": 291,
+      "section": "regular",
+      "account": null,
+      "sponsorship": null,
+      "checkedAt": "2026-10-13T00:22:46.181605+00:00",
+      "freshness": "published",
+      "passed": true
+    },
+    {
+      "check": "free_regular_disjoint",
+      "passed": true,
+      "uniqueKissGames": 91
+    },
+    {
+      "check": "published_section_order",
+      "passed": true
+    },
+    {
+      "check": "published_grouped_component",
+      "passed": true
+    },
+    {
+      "check": "admin_auth",
+      "http": 401,
+      "passed": true
+    }
+  ],
+  "deploymentId": "appgdep_6acd7d2a567c81919d7a16885c21869c",
+  "classification": "Manufacturer-sponsored Free Credit catalogue, not game title, game category or Free Spins support.",
+  "sectionOrder": [
+    "sponsored",
+    "regular"
+  ],
+  "sponsoredGameCount": 87,
+  "regularGameCount": 295,
+  "uniqueDisplayedGames": 382,
+  "blockedFreeCatalogues": [
+    {
+      "provider": "epicwin",
+      "http": 502,
+      "checkedAt": "2026-10-13T00:30:11.280760+00:00",
+      "included": false
+    }
+  ],
+  "gameLaunchAvailable": false,
+  "notes": [
+    "No gaming account, wallet balance, bonus grant, payment or withdrawal was created or changed.",
+    "Free and normal provider profiles are read separately. Sponsored game IDs are excluded from the regular section.",
+    "Original catalogue verification timestamps are preserved when published snapshots are shown."
+  ]
+}

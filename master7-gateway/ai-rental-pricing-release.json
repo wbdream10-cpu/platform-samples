@@ -1,0 +1,35 @@
+{
+  "recordedAt": "2026-10-13T00:55:55.555Z",
+  "kind": "AI rental price display",
+  "currency": "MYR",
+  "monthlyRentalCents": 50000,
+  "openingMaintenanceCents": 300000,
+  "maintenanceBillingCycle": "Pending rental agreement; no recurring charge assumed",
+  "automaticBilling": false,
+  "aiConnected": false,
+  "aiKeyCreated": false,
+  "sourceCommit": "0bcb7b708daf664eecaf04cf44f1b733235b8ada",
+  "siteVersion": 98,
+  "deployment": {
+    "id": "appgdep_6acd813704bc8191a834c457c984b5cc",
+    "project_id": "appgprj_6abcd530747c81918fb5411fc42b24b3",
+    "title": "Master7",
+    "version_id": "appgprj_6abcd530747c81918fb5411fc42b24b3~appgver_adc649445b948191bfab02cf3b3306e2",
+    "type": "publish",
+    "status": "succeeded",
+    "url": "https://white-label-platform-shell.wbdream10.chatgpt.site",
+    "has_mcp": true,
+    "screenshot_asset_pointer": null,
+    "provider_deployment_id": "site---6abcd530747c81918fb5411fc42b24b3",
+    "failure_message": null,
+    "env_set_revision": 7,
+    "updated_at": "2026-10-13T00:54:32.304938+00:00"
+  },
+  "adminUrl": "https://admin.master7.best/admin?panel=ai-access",
+  "browserVisualQa": false,
+  "validation": [
+    "JavaScript syntax check passed",
+    "Vinext production build passed"
+  ],
+  "supplierReport": "supplier-report-20261013.md"
+}

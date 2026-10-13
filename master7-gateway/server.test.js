@@ -24,6 +24,82 @@ test('health exposes readiness without secrets', async () => {
   assert.equal(JSON.stringify(data).includes('secret'), false);
 });
 
+const PLATFORM_ORIGINS = ['https://www.master7.vip', 'https://www.master7.best', 'https://admin.master7.best'];
+
+test('three configured platform origins work for GET and browser preflight', async () => {
+  const app = makeApp({ env: { ALLOWED_ORIGINS: PLATFORM_ORIGINS.join(',') } });
+  for (const origin of PLATFORM_ORIGINS) {
+    const health = await run(app, '/health', { headers: { Origin: origin } });
+    assert.equal(health.status, 200);
+    assert.equal(health.headers.get('access-control-allow-origin'), origin);
+    assert.equal(health.headers.get('vary'), 'Origin');
+    assert.equal(health.headers.get('access-control-allow-credentials'), null);
+    const data = await health.json();
+    assert.equal(data.version, require('./package.json').version);
+    assert.deepEqual(data.browserAccess.allowedOrigins, PLATFORM_ORIGINS);
+    assert.equal(data.mode, 'uat');
+    const preflight = await run(app, '/admin/vpay/order', { method: 'OPTIONS', headers: {
+      Origin: origin, 'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'authorization, content-type',
+    } });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), origin);
+  }
+});
+
+test('untrusted, lookalike and opaque origins receive no browser access', async () => {
+  const app = makeApp({ env: { ALLOWED_ORIGINS: PLATFORM_ORIGINS.join(',') } });
+  for (const origin of ['https://www.master7.best.attacker.test', 'https://master7.best', 'http://www.master7.best', 'null']) {
+    const res = await run(app, '/health', { headers: { Origin: origin } });
+    assert.equal(res.headers.get('access-control-allow-origin'), null);
+    assert.equal(res.headers.get('vary'), 'Origin');
+    const preflight = await run(app, '/health', { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'GET' } });
+    assert.equal(preflight.status, 403);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), null);
+  }
+});
+
+test('approved website origins do not bypass admin or callback authorization', async () => {
+  let calls = 0;
+  const app = makeApp({ env: {
+    ALLOWED_ORIGINS: PLATFORM_ORIGINS.join(','), GATEWAY_ADMIN_TOKEN: 'x'.repeat(32),
+    VPAY_TRADER_ID: '123', VPAY_API_TOKEN: 'private-test-key',
+  }, fetchImpl: async () => { calls++; throw new Error('must not send upstream'); } });
+  for (const path of ['/admin/vpay/order', '/callbacks/vpay/payment', '/callbacks/vpay/withdrawal']) {
+    const res = await run(app, path, { method: 'POST', headers: {
+      Origin: PLATFORM_ORIGINS[2], 'Content-Type': 'application/json',
+    }, body: '{}' });
+    assert.equal(res.status, 401);
+    assert.equal(res.headers.get('access-control-allow-origin'), PLATFORM_ORIGINS[2]);
+    assert.equal((await res.text()).includes('private-test-key'), false);
+  }
+  assert.equal(calls, 0);
+});
+
+test('legacy origin, explicit override and empty list behave predictably', async () => {
+  const legacy = makeApp({ env: { ALLOWED_ORIGIN: 'https://legacy.example/' } });
+  const res = await run(legacy, '/health', { headers: { Origin: 'https://legacy.example' } });
+  assert.equal(res.headers.get('access-control-allow-origin'), 'https://legacy.example');
+  const custom = makeApp({ env: { ALLOWED_ORIGIN: 'https://legacy.example', ALLOWED_ORIGINS: ' https://www.master7.best/, https://www.master7.best ' } });
+  const status = await run(custom, '/health');
+  assert.deepEqual((await status.json()).browserAccess.allowedOrigins, ['https://www.master7.best']);
+  const denied = await run(custom, '/health', { headers: { Origin: 'https://legacy.example' } });
+  assert.equal(denied.headers.get('access-control-allow-origin'), null);
+  const closed = await run(makeApp({ env: { ALLOWED_ORIGINS: '' } }), '/health', { headers: { Origin: PLATFORM_ORIGINS[0] } });
+  assert.equal(closed.headers.get('access-control-allow-origin'), null);
+});
+
+test('bad origin configuration and unsupported preflights are rejected', async () => {
+  for (const value of ['*', 'null', 'https://*.example.com', 'https://user:pass@example.com', 'https://example.com/path', 'https://example.com?x=1', 'https://example.com#x', 'file:///tmp']) {
+    assert.throws(() => makeApp({ env: { ALLOWED_ORIGINS: value } }), /origin/i);
+  }
+  const app = makeApp({ env: { ALLOWED_ORIGINS: PLATFORM_ORIGINS[0] } });
+  for (const extra of [{ 'Access-Control-Request-Method': 'DELETE' }, { 'Access-Control-Request-Headers': 'x-admin-secret' }]) {
+    const res = await run(app, '/health', { method: 'OPTIONS', headers: { Origin: PLATFORM_ORIGINS[0], ...extra } });
+    assert.equal(res.status, 403);
+  }
+});
+
 test('MegaH5 catalog signs the documented fields', async () => {
   let request;
   const fetchImpl = async (url, options) => {
@@ -158,3 +234,4 @@ test('catalogue provider denial remains a failure and hides upstream secrets',as
   const data=await res.json();assert.equal(res.status,502);assert.equal(data.providerStatus,900403);
   assert.ok(!JSON.stringify(data).includes('private'));
 });
+

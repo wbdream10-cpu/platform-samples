@@ -1,0 +1,56 @@
+[
+  {
+    "brand": "QUICKSPIN",
+    "providerCode": "FI",
+    "currency": "MYR",
+    "sourceFile": "QUICKSPIN(FI)- MASTER7 MYR- Client Copy.xlsx",
+    "apiUrl": "http://gsmd.336699bet.com",
+    "logUrl": "http://fetch.336699bet.com",
+    "backofficeUrl": "https://ui.adminfg.com/login",
+    "credentialsReceived": true,
+    "serverConfigurationSaved": true,
+    "catalogueVerified": false,
+    "gameLaunchAvailable": false,
+    "missing": [
+      "API method and signing contract",
+      "Confirmed secure transport endpoint",
+      "Successful catalogue response and supplier QA"
+    ]
+  },
+  {
+    "brand": "ASTAR",
+    "providerCode": "YX",
+    "currency": "MYR",
+    "sourceFile": "ASTAR(YX)- MASTER7 MYR- Client Copy.xlsx",
+    "apiUrl": "http://gsmd.336699bet.com",
+    "logUrl": "http://fetch.336699bet.com",
+    "backofficeUrl": "https://www.astar222.net",
+    "credentialsReceived": true,
+    "serverConfigurationSaved": true,
+    "catalogueVerified": false,
+    "gameLaunchAvailable": false,
+    "missing": [
+      "API method and signing contract",
+      "Confirmed secure transport endpoint",
+      "Successful catalogue response and supplier QA"
+    ]
+  },
+  {
+    "brand": "ALLBET",
+    "providerCode": "AK",
+    "currency": "MYR",
+    "sourceFile": "ALLBET(AK)- MASTER7 MYR- Client Copy.xlsx",
+    "apiUrl": "http://gsmd.336699bet.com",
+    "logUrl": "http://fetch.336699bet.com",
+    "backofficeUrl": "https://ams.allbetgaming.net",
+    "credentialsReceived": true,
+    "serverConfigurationSaved": true,
+    "catalogueVerified": false,
+    "gameLaunchAvailable": false,
+    "missing": [
+      "API method and signing contract",
+      "Confirmed secure transport endpoint",
+      "Successful catalogue response and supplier QA"
+    ]
+  }
+]

@@ -6,8 +6,28 @@ const { verifyVpayNotification, vpaySignature } = require('./vpay');
 const { jiliCatalogueBody } = require('./jili');
 const { venusCatalogue } = require('./venus');
 
-const VERSION = '1.5.1';
+const { version: VERSION } = require('./package.json');
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
+
+function browserOrigins(env) {
+  const configured = env.ALLOWED_ORIGINS !== undefined
+    ? env.ALLOWED_ORIGINS
+    : (env.ALLOWED_ORIGIN || 'https://www.master7.vip');
+  const origins = new Set();
+  for (const item of String(configured).split(',')) {
+    const value = item.trim();
+    if (!value) continue;
+    let url;
+    try { url = new URL(value); }
+    catch { throw new Error('Invalid browser origin configuration'); }
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password
+        || url.pathname !== '/' || url.search || url.hash || url.hostname.includes('*')) {
+      throw new Error('Browser origins must be exact HTTP(S) origins without paths or credentials');
+    }
+    origins.add(url.origin);
+  }
+  return origins;
+}
 
 function cleanBase(value, fallback) {
   return String(value || fallback).replace(/\/+$/, '');
@@ -34,7 +54,7 @@ function safeEqual(a, b) {
 function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new Date() } = {}) {
   const currency = String(env.CURRENCY || 'MYR').toUpperCase();
   const publicBase = cleanBase(env.PUBLIC_BASE_URL, '');
-  const allowedOrigin = cleanBase(env.ALLOWED_ORIGIN, 'https://www.master7.vip');
+  const allowedOrigins = browserOrigins(env);
   const evoBase = cleanBase(env.EVO_BASE_URL, 'https://api.evo888h5.com');
   const megaBase = cleanBase(env.MEGA_BASE_URL, 'https://smakermicsvc.back138.com/api/opgateway/v1/op');
   const vpayBase = cleanBase(env.VPAY_BASE_URL, 'https://gateway.vpay.club');
@@ -189,11 +209,22 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
 
   return async function handler(req, res) {
     const origin = String(req.headers.origin || '');
-    const cors = origin === allowedOrigin ? {
+    const originAllowed = allowedOrigins.has(origin);
+    const cors = originAllowed ? {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
-    } : {};
+    } : { 'Vary': 'Origin' };
+    // Set once so validation errors, admin denials and text callbacks also
+    // preserve the same exact-origin policy. CORS never replaces authorization.
+    for (const [name, value] of Object.entries(cors)) res.setHeader(name, value);
     if (req.method === 'OPTIONS') {
+      const method = String(req.headers['access-control-request-method'] || '').toUpperCase();
+      const requestedHeaders = String(req.headers['access-control-request-headers'] || '')
+        .split(',').map(value => value.trim().toLowerCase()).filter(Boolean);
+      if ((origin && !originAllowed) || (method && !['GET', 'POST', 'OPTIONS'].includes(method))
+          || requestedHeaders.some(value => !['authorization', 'content-type'].includes(value))) {
+        return send(res, 403, { error: 'cors_request_denied' });
+      }
       res.writeHead(204, headers({ ...cors, 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Authorization,Content-Type' }));
       return res.end();
     }
@@ -205,6 +236,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         return send(res, 200, {
           ok: true,
           service: 'MASTER7 API',
+          version: VERSION,
           status: 'online',
           currency,
           mode: String(env.GATEWAY_MODE || 'uat'),
@@ -230,6 +262,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           version: VERSION,
           currency,
           mode: String(env.GATEWAY_MODE || 'uat'),
+          browserAccess: { allowedOrigins: [...allowedOrigins], credentials: false },
           configured: {
             evo888h5: Boolean(env.EVO_API_TOKEN),
             venus: Boolean(env.VENUS_SITE_CODE && env.VENUS_API_KEY),
@@ -601,4 +634,5 @@ function start(env = process.env) {
 if (require.main === module) start();
 
 module.exports = { makeApp, megaSignature, start, utcSeconds };
+
 

@@ -211,6 +211,30 @@
       "evidence": "已收到网站、下载入口及账号；没有已确认的清单API与签名规则。",
       "environment": "Production / MYR",
       "group": "未验证"
+    },
+    {
+      "brand": "QUICKSPIN",
+      "status": "资料已检查，服务端配置已保存",
+      "evidence": "已读取厂家资料表；API及LOG地址相同，分别保留供应商代号。接口方法、签名规则、HTTPS和清单尚未验证。",
+      "environment": "MYR；资料未明确标注测试/生产",
+      "group": "未验证",
+      "providerCode": "FI"
+    },
+    {
+      "brand": "ASTAR",
+      "status": "资料已检查，服务端配置已保存",
+      "evidence": "已读取厂家资料表；API及LOG地址相同，分别保留供应商代号。接口方法、签名规则、HTTPS和清单尚未验证。",
+      "environment": "MYR；资料未明确标注测试/生产",
+      "group": "未验证",
+      "providerCode": "YX"
+    },
+    {
+      "brand": "ALLBET",
+      "status": "资料已检查，服务端配置已保存",
+      "evidence": "已读取厂家资料表；API及LOG地址相同，分别保留供应商代号。接口方法、签名规则、HTTPS和清单尚未验证。",
+      "environment": "MYR；资料未明确标注测试/生产",
+      "group": "未验证",
+      "providerCode": "AK"
     }
   ],
   "payment": {
@@ -319,5 +343,6 @@
       "testId": "不适用（支付回调）",
       "checkedAt": "2026-10-13 07:51 MYT"
     }
-  ]
+  ],
+  "registryUpdatedAt": "2026-10-13T03:02:19.708Z"
 }

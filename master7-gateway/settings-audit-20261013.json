@@ -1,0 +1,105 @@
+{
+  "checkedAt": "2026-10-13T03:02:47.127Z",
+  "account": "wbdream10",
+  "release": "1.6.0",
+  "websites": [
+    {
+      "url": "https://www.master7.vip",
+      "pageReachable": true,
+      "newSiteBinding": "pending_validation",
+      "servesOldPlatform": true
+    },
+    {
+      "url": "https://www.master7.best",
+      "pageReachable": true,
+      "tls": "active",
+      "siteVersion": 101
+    },
+    {
+      "url": "https://admin.master7.best",
+      "loginRequired": true,
+      "tls": "active",
+      "siteVersion": 101
+    }
+  ],
+  "gateway": {
+    "service": "master7-integration-gateway",
+    "plan": "free",
+    "region": "singapore",
+    "autoDeploy": true,
+    "httpHealthCheckPathConfigured": false,
+    "corsOrigins": [
+      "https://www.master7.vip",
+      "https://www.master7.best",
+      "https://admin.master7.best"
+    ],
+    "localTests": {
+      "passed": 31,
+      "failed": 0
+    },
+    "productionDeployment": "pending"
+  },
+  "otherRenderServices": [
+    {
+      "name": "master7-independent-support-demo-v22",
+      "plan": "static",
+      "autoDeploy": "yes",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "master7-support-vendor-demo",
+      "plan": "static",
+      "autoDeploy": "no",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "master7-support-live",
+      "plan": "free",
+      "autoDeploy": "no",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "master7-support-recovery",
+      "plan": "free",
+      "autoDeploy": "yes",
+      "lastDeployStatus": "build_failed"
+    },
+    {
+      "name": "master7-platform-sync",
+      "plan": "free",
+      "autoDeploy": "no",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "master7-support-bot-v2",
+      "plan": "free",
+      "autoDeploy": "yes",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "master7-support-bot",
+      "plan": "free",
+      "autoDeploy": "yes",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "luckywin52-bot1",
+      "plan": "free",
+      "autoDeploy": "yes",
+      "lastDeployStatus": "live"
+    },
+    {
+      "name": "luckywin52-bot",
+      "plan": "free",
+      "autoDeploy": "yes",
+      "lastDeployStatus": "build_failed"
+    }
+  ],
+  "limits": [
+    "Render metrics returned no datapoints; CPU and memory usage unverified.",
+    "Cloudflare account rules were not accessible; no crawler settings changed.",
+    "Gateway transport requests timed out during initial direct checks.",
+    "Game launch, member accounts, automatic crediting, withdrawals and bonus settlement are not completed by this release.",
+    "Legacy failed services were inspected but not deleted or restarted."
+  ]
+}

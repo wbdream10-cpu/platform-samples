@@ -1,0 +1,76 @@
+{
+  "recordedAt": "2026-10-13T01:16:57.402Z",
+  "siteVersion": 99,
+  "sourceCommit": "05b02caf62528ce200dff1fee482eeef33345c44",
+  "adminUrl": "https://admin.master7.best/admin?panel=banking",
+  "changes": {
+    "totalWithdraw": "Confirmed payout principal across all dates, by tenant; excludes fees and deposits",
+    "bankDirectory": {
+      "names": 62,
+      "source": "https://www.bnm.gov.my/regulations/fsp-directory",
+      "verifiedOn": "2026-10-13",
+      "searchable": true,
+      "preservesSavedNames": true,
+      "manualEntry": true
+    },
+    "duitNowQR": {
+      "ownerUpload": true,
+      "staffRead": true,
+      "authenticated": true,
+      "perBankAccount": true,
+      "recipientConfirmation": true,
+      "publicDisplay": false,
+      "automaticCrediting": false,
+      "realQrUploaded": false
+    }
+  },
+  "validation": {
+    "bankingChecksPassed": 59,
+    "productionBuild": true,
+    "browserVisualQA": false
+  },
+  "deployment": {
+    "id": "appgdep_6acd86559e0481919a74775ca83d3db3",
+    "project_id": "appgprj_6abcd530747c81918fb5411fc42b24b3",
+    "title": "Master7",
+    "version_id": "appgprj_6abcd530747c81918fb5411fc42b24b3~appgver_ba0a59aca4348191a0c3b54a6f6ad9bd",
+    "type": "publish",
+    "status": "succeeded",
+    "url": "https://white-label-platform-shell.wbdream10.chatgpt.site",
+    "has_mcp": true,
+    "screenshot_asset_pointer": null,
+    "provider_deployment_id": "site---6abcd530747c81918fb5411fc42b24b3",
+    "failure_message": null,
+    "env_set_revision": 7,
+    "updated_at": "2026-10-13T01:16:24.046902+00:00"
+  },
+  "publicChecks": [
+    {
+      "path": "/banking.js",
+      "http": 200,
+      "withdraw": true,
+      "banks": true,
+      "duitnow": true
+    },
+    {
+      "path": "/crown-theme.css",
+      "http": 200,
+      "responsive": true
+    },
+    {
+      "path": "/admin?panel=banking",
+      "http": 302,
+      "location": "/signin-with-chatgpt?return_to=%2Fadmin%3Fpanel%3Dbanking"
+    },
+    {
+      "path": "/api/banking?tenant=unknown",
+      "http": 401,
+      "location": null
+    },
+    {
+      "path": "/api/banking/qr?tenant=unknown&account=unknown",
+      "http": 401,
+      "location": null
+    }
+  ]
+}

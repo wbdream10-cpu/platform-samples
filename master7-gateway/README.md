@@ -11,6 +11,38 @@ Implemented:
 
 Provider secrets are supplied only through Render environment variables. Callback POST requests remain closed until each provider's signed callback contract is implemented; the reachability endpoint does not claim transaction readiness.
 
+## Version 1.7.0: payment validation and truthful readiness
+
+- `/health` remains process liveness (HTTP 200 is not provider QA).
+- `/readiness` and `/providers/vpay/status` now distinguish configured credentials,
+  transaction switches, secure wallet forwarding, and unverified production QA.
+  These checks perform no upstream transaction. `liveReady` stays false because
+  this service has no verified end-to-end acceptance record.
+- Zero, negative and fractional-cent payment/withdrawal amounts are rejected.
+  Orders also require a valid callback base, HTTPS wallet forwarding URL, and a
+  platform callback bearer token of at least 32 characters.
+- VPay and EVO888H5 require an explicit success code (`0` or `"0"`); null, empty
+  strings, arrays, missing fields and provider rejection codes are failures.
+- VPay callback forwarding acknowledges a signed notification only after the
+  wallet returns HTTP 2xx with the exact plain-text body `SUCCESS`. Empty 204,
+  HTML, JSON, declined acknowledgements, redirects and failures stay retryable.
+  The wallet must durably and idempotently settle or recognize the notification
+  before returning `SUCCESS`; the Gateway does not implement the wallet ledger.
+- Requests are limited to 64 KiB in UTF-8 bytes and must be JSON objects.
+  Responses from shared provider transport are limited to 2 MiB. Redirects are
+  rejected and credential-bearing outbound requests require HTTPS.
+- Every response has a server-generated `X-Request-Id`. Timeout messages are
+  stable and do not echo upstream URLs or error text.
+
+This release does not enable production payment switches, create players, grant
+bonuses, change the Render plan, or complete supplier QA. Existing Render settings
+still need `/health` configured as the HTTP health check and a non-sleeping plan
+for continuous operation; changing this README does not apply those settings.
+
+`npm test` verifies transport failures, signed callback forwarding and retry,
+payment validation, credentials, origin boundaries, and all prior provider tests
+with local fixtures. It does not send real payment or withdrawal requests.
+
 ## Version 1.6.0: three website origins
 
 Set `ALLOWED_ORIGINS` to a comma-separated exact-origin list in Render:

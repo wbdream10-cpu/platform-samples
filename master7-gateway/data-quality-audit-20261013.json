@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-13T04:06:35.185Z",
+  "scope": "registry_consistency_only",
+  "grain": "one upstream brand; accounts and currency ratios are not additional brands",
+  "source": {
+    "registry": "integrations-status.json",
+    "intake": "provider-intake-20261013.json",
+    "evidenceAsOf": "2026-10-13T00:39:23.629260+00:00",
+    "ageSeconds": 12431
+  },
+  "providerRows": 33,
+  "uniqueBrands": 33,
+  "recordedCatalogueStatuses": {
+    "historicallyVerified": 3,
+    "blocked": 8,
+    "unverified": 22
+  },
+  "catalogueSnapshot": {
+    "uniqueGames": 382,
+    "sponsoredGames": 87,
+    "regularGames": 295,
+    "originallyPublishedSiteVersion": 97,
+    "gameLaunchAvailable": false,
+    "liveRefreshVerified": false
+  },
+  "paymentQaRecorded": false,
+  "consistencyPassed": true,
+  "findings": [
+    {
+      "severity": "medium",
+      "code": "historical_evidence_not_live_recheck",
+      "evidenceAsOf": "2026-10-13T00:39:23.629260+00:00",
+      "registryUpdatedAt": "2026-10-13T03:02:19.708Z"
+    }
+  ],
+  "limits": [
+    "Counts describe saved evidence, not a new provider connection test.",
+    "Catalogue availability does not establish playable games or production settlement."
+  ]
+}

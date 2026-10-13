@@ -1,11 +1,12 @@
 {
   "name": "master7-integration-gateway",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test server.test.js vpay.test.js jili.test.js venus.test.js"
+    "test": "node --test server.test.js vpay.test.js jili.test.js venus.test.js reliability.test.js data-quality.test.js",
+    "audit": "node audit-integrations.js"
   },
   "engines": {
     "node": "22.x"

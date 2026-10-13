@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
 const { jiliCatalogueBody } = require('./jili');
 const { venusCatalogue } = require('./venus');
+const { configuredUrl, vpayReadiness, integrationReadiness } = require('./readiness');
 
 const { version: VERSION } = require('./package.json');
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
@@ -119,26 +120,50 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   }
 
   async function body(req) {
-    let raw = '';
-    for await (const chunk of req) {
-      raw += chunk;
-      if (raw.length > 65536) throw Object.assign(new Error('request_too_large'), { status: 413 });
+    const chunks = [];
+    let bytes = 0;
+    for await (const chunk of req.iterator({ destroyOnReturn: false })) {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      bytes += buffer.length;
+      if (bytes > 65536) {
+        req.resume();
+        throw Object.assign(new Error('request_too_large'), { status: 413 });
+      }
+      chunks.push(buffer);
     }
-    if (!raw) return {};
-    try { return JSON.parse(raw); }
+    if (!bytes) return {};
+    let data;
+    try { data = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
     catch { throw Object.assign(new Error('invalid_json'), { status: 400 }); }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw Object.assign(new Error('json_object_required'), { status: 400 });
+    }
+    return data;
   }
 
   async function upstream(url, options = {}) {
+    if (!configuredUrl(url)) throw Object.assign(new Error('upstream_url_invalid'), { status: 503 });
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await fetchImpl(url, { ...options, signal: controller.signal });
-      const raw = await response.text();
+      const response = await fetchImpl(url, { ...options, redirect: options.redirect === 'error' ? 'error' : 'manual', signal: controller.signal });
+      if (response.status >= 300 && response.status < 400) {
+        await response.body?.cancel();
+        throw Object.assign(new Error('upstream_redirect_rejected'), { status: 502 });
+      }
+      // Catalogue responses can be large, but must remain bounded in memory.
+      const chunks = [];
+      let bytes = 0;
+      if (response.body) for await (const chunk of response.body) {
+        bytes += chunk.length;
+        if (bytes > 2097152) throw Object.assign(new Error('upstream_response_too_large'), { status: 502 });
+        chunks.push(Buffer.from(chunk));
+      }
+      const raw = Buffer.concat(chunks).toString('utf8');
       let data;
       try { data = raw ? JSON.parse(raw) : {}; }
       catch { data = { message: raw.slice(0, 500) }; }
-      return { ok: response.ok, status: response.status, data };
+      return { ok: response.ok, status: response.status, data, acknowledgement: raw === 'SUCCESS' };
     } finally {
       clearTimeout(timer);
     }
@@ -208,6 +233,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   }
 
   return async function handler(req, res) {
+    // Generated locally: never trust a client-supplied request ID in audit output.
+    res.setHeader('X-Request-Id', crypto.randomUUID());
     const origin = String(req.headers.origin || '');
     const originAllowed = allowedOrigins.has(origin);
     const cors = originAllowed ? {
@@ -241,6 +268,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           currency,
           mode: String(env.GATEWAY_MODE || 'uat'),
           health: `${base}/health`,
+          readiness: `${base}/readiness`,
           endpoints: {
             megah5Games: `${base}/providers/megah5/games`,
             evo888h5Games: `${base}/providers/evo888h5/games`,
@@ -262,6 +290,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           version: VERSION,
           currency,
           mode: String(env.GATEWAY_MODE || 'uat'),
+          readiness: { scope: 'process_health_only', productionQa: 'not_verified', liveReady: false },
           browserAccess: { allowedOrigins: [...allowedOrigins], credentials: false },
           configured: {
             evo888h5: Boolean(env.EVO_API_TOKEN),
@@ -277,9 +306,14 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         }, cors);
       }
 
+      if (req.method === 'GET' && url.pathname === '/readiness') {
+        return send(res, 200, { service: 'master7-integration-gateway', version: VERSION,
+          checkedAt: now().toISOString(), ...integrationReadiness(env) }, cors);
+      }
+
       if (req.method === 'GET' && url.pathname === '/providers/evo888h5/games') {
         const result = await cached('evo-games', () => evo('/game/list'));
-        const providerOK = Number(result.data && result.data.code) === 0;
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data }, cors);
       }
 
@@ -424,6 +458,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           provider: 'vpay',
           configured: Boolean(vpayTraderId && vpayApiToken),
           mode: String(env.VPAY_MODE || 'uat'),
+          readiness: vpayReadiness(env),
           gateway: vpayBase,
           callbackUrls: {
             payment: callbackUrls().vpayPayment,
@@ -451,17 +486,21 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const forwardUrl = vpayCallbackMatch[1] === 'payment'
           ? String(env.VPAY_PAYMENT_FORWARD_URL || '')
           : String(env.VPAY_WITHDRAWAL_FORWARD_URL || '');
-        if (!forwardUrl) return send(res, 503, { error: 'platform_wallet_callback_not_configured' });
+        if (!configuredUrl(forwardUrl) || String(env.PLATFORM_CALLBACK_TOKEN || '').length < 32) {
+          return send(res, 503, { error: 'platform_wallet_callback_not_configured' });
+        }
         const forward = await upstream(forwardUrl, {
           method: 'POST',
           headers: {
             Accept: 'application/json,text/plain',
             'Content-Type': 'application/json',
-            ...(env.PLATFORM_CALLBACK_TOKEN ? { Authorization: `Bearer ${env.PLATFORM_CALLBACK_TOKEN}` } : {}),
+            Authorization: `Bearer ${env.PLATFORM_CALLBACK_TOKEN}`,
           },
           body: JSON.stringify(payload),
         });
-        return forward.ok
+        // Only the platform wallet's explicit durable acknowledgement may stop
+        // provider retries. An arbitrary HTTP 200 (e.g. a login page) is not it.
+        return forward.ok && forward.acknowledgement
           ? sendText(res, 200, 'SUCCESS')
           : send(res, 502, { error: 'platform_wallet_callback_failed' });
       }
@@ -487,9 +526,13 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const tradeCode = String(payload.tradeCode || '');
         const payerName = String(payload.payerName || '');
         if (!/^[A-Za-z0-9_-]{1,50}$/.test(outTradeNo) || !/^\d{1,7}(?:\.\d{1,2})?$/.test(amount)
+          || Number(amount) <= 0
           || !['1', '2', '3', '4', '5', '7'].includes(tradeCode)
           || title.length < 1 || title.length > 100 || payerName.length < 1 || payerName.length > 30) {
           return send(res, 400, { error: 'invalid_vpay_order' });
+        }
+        if (!vpayReadiness(env).channels.payment.configurationReady) {
+          return send(res, 503, { error: 'vpay_payment_configuration_incomplete' });
         }
         const result = await vpay('TRADER_ORDER', {
           title,
@@ -500,7 +543,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           notify_url: callbackUrls().vpayPayment,
           callback_url: String(env.VPAY_RETURN_URL || env.REDIRECT_URL || 'https://www.master7.vip'),
         });
-        const providerOK = Number(result.data && result.data.code) === 0;
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
           provider: 'vpay',
           upstreamStatus: result.status,
@@ -514,7 +557,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const outTradeNo = String(payload.outTradeNo || '');
         if (!/^[A-Za-z0-9_-]{1,50}$/.test(outTradeNo)) return send(res, 400, { error: 'invalid_out_trade_no' });
         const result = await vpay('ORDER_GET', { out_trade_no: outTradeNo });
-        const providerOK = Number(result.data && result.data.code) === 0;
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
           provider: 'vpay',
           upstreamStatus: result.status,
@@ -525,7 +568,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
       if (req.method === 'POST' && url.pathname === '/admin/vpay/balance') {
         if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
         const result = await vpay('TRADER_BALANCE');
-        const providerOK = Number(result.data && result.data.code) === 0;
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
           provider: 'vpay',
           upstreamStatus: result.status,
@@ -545,9 +588,13 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const accountNumber = String(payload.accountNumber || '');
         const refId = String(payload.refId || '');
         if (!/^\d{1,7}(?:\.\d{1,2})?$/.test(amount) || !/^[A-Za-z0-9]{2,10}$/.test(bankName)
+          || Number(amount) <= 0
           || accountName.length < 1 || accountName.length > 100 || !/^[A-Za-z0-9-]{4,40}$/.test(accountNumber)
           || !/^[A-Za-z0-9_-]{1,50}$/.test(refId)) {
           return send(res, 400, { error: 'invalid_vpay_withdrawal' });
+        }
+        if (!vpayReadiness(env).channels.withdrawal.configurationReady) {
+          return send(res, 503, { error: 'vpay_withdrawal_configuration_incomplete' });
         }
         const result = await vpay('MONEY_OUT', {
           amount,
@@ -558,7 +605,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           ref_id: refId,
           notify_url: callbackUrls().vpayWithdrawal,
         });
-        const providerOK = Number(result.data && result.data.code) === 0;
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
           provider: 'vpay',
           upstreamStatus: result.status,
@@ -572,7 +619,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const outMoneyId = String(payload.outMoneyId || '');
         if (!/^[A-Za-z0-9_-]{1,50}$/.test(outMoneyId)) return send(res, 400, { error: 'invalid_out_money_id' });
         const result = await vpay('MONEY_GET', { out_money_id: outMoneyId });
-        const providerOK = Number(result.data && result.data.code) === 0;
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
           provider: 'vpay',
           upstreamStatus: result.status,
@@ -585,7 +632,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const payload = await body(req);
         if (!/^[A-Za-z0-9]{4,20}$/.test(String(payload.userid || ''))) return send(res, 400, { error: 'invalid_userid' });
         const result = await evo('/user/create', 'POST', { userid: String(payload.userid) });
-        return send(res, result.ok ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data });
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
+        return send(res, result.ok && providerOK ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data });
       }
 
       if (req.method === 'POST' && url.pathname === '/admin/evo888h5/balance') {
@@ -593,7 +641,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         const payload = await body(req);
         if (!/^[A-Za-z0-9]{4,20}$/.test(String(payload.userid || ''))) return send(res, 400, { error: 'invalid_userid' });
         const result = await evo('/user/balance', 'POST', { userid: String(payload.userid) });
-        return send(res, result.ok ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data });
+        const providerOK = result.data?.code === 0 || result.data?.code === '0';
+        return send(res, result.ok && providerOK ? 200 : 502, { provider: 'evo888h5', upstreamStatus: result.status, result: result.data });
       }
 
       if (req.method === 'POST' && url.pathname === '/admin/megah5/session') {
@@ -618,8 +667,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
 
       return send(res, 404, { error: 'not_found' }, cors);
     } catch (error) {
-      const status = Number(error.status) || (error.name === 'AbortError' ? 504 : 500);
-      return send(res, status, { error: status === 500 ? 'internal_error' : error.message });
+      const status = Number(error.status) || (['AbortError', 'TimeoutError'].includes(error.name) ? 504 : 500);
+      return send(res, status, { error: status === 500 ? 'internal_error' : status === 504 ? 'upstream_timeout' : error.message });
     }
   };
 }

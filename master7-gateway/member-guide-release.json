@@ -1,0 +1,57 @@
+{
+  "release": "MASTER7 member guides and reference-site feature comparison",
+  "date": "2026-10-13",
+  "source_commit": "ffc8e3bce98c415041a43e6c0c482f76e551ee72",
+  "version": "appgprj_6abcd530747c81918fb5411fc42b24b3~appgver_07cd67b5521881919cbdfa8a03cb52fb",
+  "deployment": {
+    "id": "appgdep_6acd8f26f9b08191bf35f5e3275dee13",
+    "status": "succeeded",
+    "completed_at": "2026-10-13T01:53:58.601925+00:00",
+    "url": "https://white-label-platform-shell.wbdream10.chatgpt.site"
+  },
+  "frontend_url": "https://www.master7.best/?page=help",
+  "admin_comparison_url": "https://admin.master7.best/admin?panel=status",
+  "admin_content_url": "https://admin.master7.best/admin?panel=content",
+  "implemented": [
+    "Chinese, Malay and English member guide with searchable FAQ.",
+    "Banking, promotions, VIP, terms, privacy and about information pages; owner-managed published text.",
+    "Feature navigation opens clear availability information; green means on and grey means off.",
+    "Owner status page compares public master7.vip features with current implementation and remaining work.",
+    "Safe public content projection; legacy private promotion draft remains excluded.",
+    "Tenant-aware guide deep links, browser back navigation and catalogue pagination fix.",
+    "Unconnected wallet and token placeholders show a dash instead of a fabricated balance."
+  ],
+  "still_unavailable": [
+    "Member authentication and personal transaction history.",
+    "Real wallet transfers, automatic payment crediting and withdrawal execution.",
+    "Live game launch, reward settlement, rebate, voucher and referral processing.",
+    "Fortune wheel, verified leaderboard and reward claims.",
+    "AI runtime and verified APK installation package."
+  ],
+  "unchanged": [
+    "No vendor credentials imported into the encrypted account vault.",
+    "No source-platform bonus amounts, financial limits or policy claims automatically copied.",
+    "No production financial transaction or vendor QA performed."
+  ],
+  "validation": {
+    "ui_integration_checks": 171,
+    "backend_integration_checks": 137,
+    "other_passed": [
+      "Player isolation and unavailable service gates",
+      "Player loading, retry and cancellation",
+      "Member guide publication, private-field isolation, XSS escaping, language coverage, search and navigation",
+      "Maximum content request body below request limit",
+      "JavaScript syntax and git diff check",
+      "Production build"
+    ],
+    "browser_visual_qa": "Unavailable in the managed environment; not performed."
+  },
+  "public_reference_pages": [
+    "https://www.master7.vip/",
+    "https://www.master7.vip/banking",
+    "https://www.master7.vip/promotion",
+    "https://www.master7.vip/vip",
+    "https://www.master7.vip/event",
+    "https://www.master7.vip/download"
+  ]
+}

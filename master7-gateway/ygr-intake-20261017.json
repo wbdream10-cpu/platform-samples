@@ -1,0 +1,39 @@
+{
+  "brand": "YESGETRICH (YGR)",
+  "providerCode": "ygr",
+  "receivedAt": "2026-10-17",
+  "environment": "production",
+  "currency": "MYR",
+  "supplier": {
+    "relationship": "same_supplier_as_existing_MASTER7_brands",
+    "confirmation": "user_confirmed_2026-10-17",
+    "sharedApiContractVerified": false
+  },
+  "status": "onboarding_pending",
+  "credentials": {
+    "received": true,
+    "serverConfigurationSaved": false,
+    "storageApprovalRequired": true,
+    "valuesIncluded": false
+  },
+  "verification": {
+    "gatewaySourceVersionInspected": "1.7.0",
+    "adapterPresent": false,
+    "catalogueVerified": false,
+    "gameLaunchVerified": false,
+    "callbackContractVerified": false,
+    "productionQa": "not_verified"
+  },
+  "missing": [
+    "YGR API base URL and request/signature contract",
+    "Confirmation that existing supplier IP allowlist covers YGR",
+    "YGR callback schema and signing contract, if callbacks are required",
+    "Approval to store the supplied YGR API credential in the existing MASTER7 integration gateway on Render",
+    "Successful read-only catalogue check before launch and callback QA"
+  ],
+  "notes": [
+    "Supplier relationship is confirmed by the user; it does not establish shared endpoints or signing rules.",
+    "Backoffice login credentials and agent credential values are intentionally excluded.",
+    "No player creation, balance transfer, game launch, callback acknowledgement, or transaction was performed."
+  ]
+}

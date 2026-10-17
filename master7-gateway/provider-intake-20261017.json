@@ -1,0 +1,112 @@
+{
+  "reviewedOn": "2026-10-17",
+  "scope": "Review of supplied provider credential summaries, existing gateway source, and Render deployment metadata",
+  "status": "integration_requirements_pending",
+  "evidence": {
+    "repository": "wbdream10-cpu/platform-samples",
+    "branch": "codex/master7-integration-gateway-20261012",
+    "serverBlobSha": "9fcb237f0b7685c2931394967720268e3ec8b75a",
+    "integrationStatusBlobSha": "84b06f897ed5a6a0d34a10455baa9e2f19dbadfd",
+    "latestRenderDeploy": {
+      "id": "dep-db81d9aj9qps73b92be0",
+      "status": "live",
+      "commit": "f484260718d825a31dba2495dd6abe0a91fdb3ba",
+      "version": "1.7.0",
+      "finishedAt": "2026-10-14T23:56:48.435174Z"
+    },
+    "limitations": [
+      "Deployment status does not establish endpoint health or provider integration readiness.",
+      "No authenticated provider request was made during this review."
+    ]
+  },
+  "operationalScope": {
+    "allowedProductType": "slots",
+    "fishingEnabled": false,
+    "additionalProductsRequireSeparateReview": true
+  },
+  "providers": [
+    {
+      "code": "ygr",
+      "name": "YESGETRICH (YGR)",
+      "credentialSummaryReceived": true,
+      "environmentReported": "production",
+      "currencyReported": "MYR",
+      "existingIntake": "ygr-intake-20261017.json",
+      "adapterFoundInReviewedGateway": false,
+      "verification": "not_verified",
+      "blockers": [
+        "Provider API base URL and full request/signature specification are missing.",
+        "Existing supplier IP allowlist coverage is unverified.",
+        "Applicable callback contract is unverified.",
+        "Prior automatic approval review rejected storing the API credential in the existing Render gateway because destination-specific authorization was missing; no retry or alternative secret storage was performed."
+      ]
+    },
+    {
+      "code": "gameplay",
+      "name": "Gamingsoft / GamePlay",
+      "credentialSummaryReceived": true,
+      "environmentReported": "production",
+      "currencyReported": "MYR",
+      "currencyRatioReported": "1:1",
+      "adapterFoundInReviewedGateway": false,
+      "verification": "not_verified",
+      "productEntitlementsReported": {
+        "slots": true,
+        "liveCasino": false,
+        "lottery": true
+      },
+      "blockers": [
+        "The supplied API base uses HTTP; an HTTPS endpoint or vendor-approved secure transport must be confirmed before credentials can be sent.",
+        "Full request/signature and applicable callback specifications are missing."
+      ],
+      "notes": [
+        "Supplier-enabled lottery entitlement does not authorize enabling lottery on the platform.",
+        "This brand is distinct from PGSOFT."
+      ]
+    },
+    {
+      "code": "funky",
+      "name": "Funky Games",
+      "credentialSummaryReceived": true,
+      "environmentReported": "production",
+      "adapterFoundInReviewedGateway": false,
+      "verification": "not_verified",
+      "apiAddressReceived": true,
+      "reportApiAddressReceived": true,
+      "blockers": [
+        "Full API specification, authentication header/payload format, report format, and applicable callback specification are missing.",
+        "Account currency and enabled product scope require authoritative confirmation."
+      ]
+    },
+    {
+      "code": "youlucky",
+      "name": "YouLucky / YL",
+      "credentialSummaryReceived": true,
+      "environmentReported": "production",
+      "adapterFoundInReviewedGateway": false,
+      "verification": "not_verified",
+      "apiAddressTemplateReceived": true,
+      "blockers": [
+        "Full API methods, request/signature specification, and applicable callback specification are missing.",
+        "The supplied website identifier contains fish; account entitlements must be confirmed before any product is enabled.",
+        "The supplied currency code is 1; its MYR mapping has not been verified."
+      ],
+      "notes": [
+        "An identifier containing fish alone does not establish that the entire provider is fishing-only.",
+        "Fishing remains excluded from the requested platform scope."
+      ]
+    }
+  ],
+  "actionsPerformed": [
+    "Read existing gateway source and intake records.",
+    "Read Render service and latest deployment metadata.",
+    "Searched public documentation without sending credentials.",
+    "Recorded sanitized onboarding gaps."
+  ],
+  "actionsNotPerformed": [
+    "Stored API keys or backoffice credentials.",
+    "Changed runtime configuration or provider adapters.",
+    "Created players, launched games, transferred balances, or accepted financial callbacks."
+  ],
+  "secretsIncluded": false
+}

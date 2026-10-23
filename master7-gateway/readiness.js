@@ -1,18 +1,43 @@
 'use strict';
 
 // These are configuration gates, not a provider availability or QA attestation.
-function configuredUrl(value) {
+// Public callback bases are origins; return/forward/provider URLs keep paths and
+// query strings. Never apply the origin-only rule to a signed provider request.
+function normalizeHttpsUrl(value, { originOnly = false } = {}) {
+  if (typeof value !== 'string' || !value || value !== value.trim()
+      || /[\u0000-\u0020\u007f-\u009f]/u.test(value) || value.includes('\\')
+      || value.includes('#') || !/^https:\/\//i.test(value)
+      || /^https:\/\/[^/?#]*@/i.test(value)) return '';
   try {
-    const url = new URL(String(value || ''));
-    return url.protocol === 'https:' && !url.username && !url.password && !url.hash;
-  } catch { return false; }
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password || url.hash) return '';
+    if (originOnly && (url.pathname !== '/' || value.includes('?') || url.port
+        || !/^https:\/\/[^/?#]+\/?$/i.test(value))) return '';
+    return originOnly ? url.origin : url.href;
+  } catch { return ''; }
+}
+
+function configuredUrl(value) {
+  return Boolean(normalizeHttpsUrl(value));
+}
+
+// The callback, query and order credentials share the same byte limits and may
+// never alias another peer credential or the full administrator credential.
+function peerCredential(env, name) {
+  const peers = ['PLATFORM_CALLBACK_TOKEN', 'PLATFORM_QUERY_TOKEN', 'PLATFORM_ORDER_TOKEN'];
+  if (!peers.includes(name)) return '';
+  const expected = String(env[name] || '');
+  const bytes = Buffer.byteLength(expected, 'utf8');
+  if (bytes < 32 || bytes > 1024 || ['GATEWAY_ADMIN_TOKEN', ...peers]
+    .some(key => key !== name && String(env[key] || '') === expected)) return '';
+  return expected;
 }
 
 function vpayReadiness(env = {}) {
   const credentialsConfigured = /^\d{1,10}$/.test(String(env.VPAY_TRADER_ID || '').trim())
     && Boolean(String(env.VPAY_API_TOKEN || '').trim());
-  const callbackTokenConfigured = String(env.PLATFORM_CALLBACK_TOKEN || '').length >= 32;
-  const baseConfigured = configuredUrl(env.PUBLIC_BASE_URL);
+  const callbackTokenConfigured = Boolean(peerCredential(env, 'PLATFORM_CALLBACK_TOKEN'));
+  const baseConfigured = Boolean(normalizeHttpsUrl(env.PUBLIC_BASE_URL, { originOnly: true }));
   const channels = {};
   for (const [kind, flag, target] of [
     ['payment', 'VPAY_ORDERS_ENABLED', 'VPAY_PAYMENT_FORWARD_URL'],
@@ -47,4 +72,4 @@ function integrationReadiness(env = {}) {
   };
 }
 
-module.exports = { configuredUrl, vpayReadiness, integrationReadiness };
+module.exports = { configuredUrl, normalizeHttpsUrl, peerCredential, vpayReadiness, integrationReadiness };

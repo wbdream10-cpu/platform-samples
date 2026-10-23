@@ -11,6 +11,11 @@ Implemented:
 
 Provider secrets are supplied only through Render environment variables. Callback POST requests remain closed until each provider's signed callback contract is implemented; the reachability endpoint does not claim transaction readiness.
 
+## Version 1.8.0: GSPAY+ MYR safe preparation
+
+Version 1.8.0 adds the disabled GSPAY+ MYR skeleton documented below. It does
+not change the live state of any transaction channel.
+
 ## Version 1.7.0: payment validation and truthful readiness
 
 - `/health` remains process liveness (HTTP 200 is not provider QA).
@@ -42,6 +47,51 @@ for continuous operation; changing this README does not apply those settings.
 `npm test` verifies transport failures, signed callback forwarding and retry,
 payment validation, credentials, origin boundaries, and all prior provider tests
 with local fixtures. It does not send real payment or withdrawal requests.
+
+## GSPAY+ MYR disabled integration skeleton
+
+The gateway now records the confirmed MYR signature formulas in `gspay.js` and
+tests them against the supplier-document examples. These helpers are offline:
+they do not perform HTTP requests, persist orders, update a wallet, acknowledge a
+callback, or implement DuitNow settlement. USDT and payout routes are outside
+this skeleton.
+
+The following discovery routes are intentionally safe and secret-free:
+
+- `GET /providers/gspay/status`
+- `GET /callbacks/gspay/payment`
+- `GET /callbacks/gspay/duitnow`
+- `GET /platform/gspay/config` with `PLATFORM_GSPAY_QUERY_TOKEN`
+
+`POST /platform/gspay/order`, `POST /platform/gspay/order-query`, and both
+callback POST routes always return HTTP 503 after bounded request parsing. They
+make zero supplier or platform requests even if every switch is set to `true`.
+This prevents an incomplete response contract or callback acknowledgement from
+creating a false success. `/readiness` keeps `configurationReady` and
+`liveReady` false until the create/query response schema, callback response and
+retry contract, UAT credentials, and end-to-end wallet evidence are confirmed.
+
+Reserved environment names are:
+
+```text
+GSPAY_MODE=disabled
+GSPAY_OPERATOR_AUTH_KEY
+GSPAY_OPERATOR_SECRET_KEY
+GSPAY_MYR_ORDERS_ENABLED=false
+GSPAY_MYR_QUERIES_ENABLED=false
+GSPAY_MYR_CALLBACKS_ENABLED=false
+PLATFORM_GSPAY_ORDER_TOKEN
+PLATFORM_GSPAY_QUERY_TOKEN
+PLATFORM_GSPAY_CALLBACK_TOKEN
+GSPAY_PAYMENT_FORWARD_URL
+GSPAY_DUITNOW_FORWARD_URL
+```
+
+Each platform token must contain 32–1024 UTF-8 bytes and differ from all other
+gateway peer, administrator and provider credentials. The supplier base is
+fixed in code as `https://api.thegspay.com`; no environment setting can redirect
+GSPAY credentials to another host. Do not configure real credentials yet: the
+transaction routes remain deliberately inactive and no supplier QA has passed.
 
 ## Version 1.6.0: three website origins
 

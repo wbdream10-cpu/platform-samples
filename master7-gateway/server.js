@@ -119,6 +119,14 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
     return expected.length >= 32 && safeEqual(expected, supplied);
   }
 
+  // A wallet query credential may confirm an existing payment, but may not
+  // create orders, read the merchant balance, withdraw or access game admins.
+  function isWalletQueryPeer(req) {
+    const expected = String(env.PLATFORM_QUERY_TOKEN || '');
+    const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    return expected.length >= 32 && expected.length <= 1024 && safeEqual(expected, supplied);
+  }
+
   async function body(req) {
     const chunks = [];
     let bytes = 0;
@@ -551,12 +559,15 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         });
       }
 
-      if (req.method === 'POST' && url.pathname === '/admin/vpay/order-query') {
-        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+      if (req.method === 'POST' && ['/admin/vpay/order-query', '/platform/vpay/order-query'].includes(url.pathname)) {
+        const walletQuery = url.pathname === '/platform/vpay/order-query';
+        if (walletQuery ? !isWalletQueryPeer(req) : !isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
         const payload = await body(req);
         const outTradeNo = String(payload.outTradeNo || '');
         if (!/^[A-Za-z0-9_-]{1,50}$/.test(outTradeNo)) return send(res, 400, { error: 'invalid_out_trade_no' });
-        const result = await vpay('ORDER_GET', { out_trade_no: outTradeNo });
+        const tradeNo = String(payload.tradeNo || '');
+        if (walletQuery && !/^[A-Za-z0-9_-]{1,128}$/.test(tradeNo)) return send(res, 400, { error: 'invalid_trade_no' });
+        const result = await vpay('ORDER_GET', { out_trade_no: outTradeNo, ...(walletQuery ? { trade_no: tradeNo } : {}) });
         const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
           provider: 'vpay',

@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test server.test.js vpay.test.js jili.test.js venus.test.js reliability.test.js data-quality.test.js",
+    "test": "node --test server.test.js vpay.test.js jili.test.js venus.test.js reliability.test.js data-quality.test.js wallet-query.test.js",
     "audit": "node audit-integrations.js"
   },
   "engines": {

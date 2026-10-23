@@ -121,10 +121,41 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
 
   // A wallet query credential may confirm an existing payment, but may not
   // create orders, read the merchant balance, withdraw or access game admins.
+  function walletPeerCredential(name) {
+    const expected = String(env[name] || '');
+    const bytes = Buffer.byteLength(expected);
+    if (bytes < 32 || bytes > 1024 || ['GATEWAY_ADMIN_TOKEN', 'PLATFORM_QUERY_TOKEN', 'PLATFORM_ORDER_TOKEN', 'PLATFORM_CALLBACK_TOKEN']
+      .some(key => key !== name && String(env[key] || '') === expected)) return '';
+    return expected;
+  }
+
   function isWalletQueryPeer(req) {
-    const expected = String(env.PLATFORM_QUERY_TOKEN || '');
+    const expected = walletPeerCredential('PLATFORM_QUERY_TOKEN');
     const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-    return expected.length >= 32 && expected.length <= 1024 && safeEqual(expected, supplied);
+    return Boolean(expected) && safeEqual(expected, supplied);
+  }
+
+  function isWalletOrderPeer(req) {
+    const expected = walletPeerCredential('PLATFORM_ORDER_TOKEN');
+    const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    return Boolean(expected) && safeEqual(expected, supplied);
+  }
+
+  function walletPaymentConfiguration() {
+    let tradeCodes = [];
+    try {
+      const values = JSON.parse(env.VPAY_ENABLED_TRADE_CODES || '[]');
+      if (Array.isArray(values) && values.length && new Set(values).size === values.length
+        && values.every(value => typeof value === 'string' && ['1', '2', '3', '4', '5', '7'].includes(value))) tradeCodes = values;
+    } catch {}
+    const returnUrl = String(env.VPAY_RETURN_URL || '');
+    return {
+      provider: 'vpay', traderId: vpayTraderId, mode: String(env.VPAY_MODE || 'uat'),
+      configured: Boolean(vpayTraderId && vpayApiToken),
+      paymentReady: vpayReadiness(env).channels.payment.configurationReady && tradeCodes.length > 0
+        && configuredUrl(returnUrl) && Boolean(walletPeerCredential('PLATFORM_ORDER_TOKEN')) && Boolean(walletPeerCredential('PLATFORM_QUERY_TOKEN')),
+      tradeCodes, notifyUrl: callbackUrls().vpayPayment, returnUrl,
+    };
   }
 
   async function body(req) {
@@ -522,8 +553,14 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         return send(res, 503, { ok: false, provider: callbackMatch[1], code: 'CALLBACK_CONTRACT_NOT_ACTIVE' });
       }
 
-      if (req.method === 'POST' && url.pathname === '/admin/vpay/order') {
-        if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+      if (req.method === 'GET' && url.pathname === '/platform/vpay/config') {
+        if (!isWalletQueryPeer(req)) return send(res, 401, { error: 'unauthorized' });
+        return send(res, 200, walletPaymentConfiguration());
+      }
+
+      if (req.method === 'POST' && ['/admin/vpay/order', '/platform/vpay/order'].includes(url.pathname)) {
+        const walletOrder = url.pathname === '/platform/vpay/order';
+        if (walletOrder ? !isWalletOrderPeer(req) : !isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
         if (String(env.VPAY_ORDERS_ENABLED || '').toLowerCase() !== 'true') {
           return send(res, 503, { error: 'vpay_orders_disabled' });
         }
@@ -542,6 +579,11 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         if (!vpayReadiness(env).channels.payment.configurationReady) {
           return send(res, 503, { error: 'vpay_payment_configuration_incomplete' });
         }
+        const peerConfiguration = walletPaymentConfiguration();
+        if (walletOrder && (!peerConfiguration.paymentReady || !peerConfiguration.tradeCodes.includes(tradeCode)
+          || payload.notifyUrl !== peerConfiguration.notifyUrl || payload.callbackUrl !== peerConfiguration.returnUrl)) {
+          return send(res, 503, { error: 'vpay_payment_configuration_incomplete' });
+        }
         const result = await vpay('TRADER_ORDER', {
           title,
           out_trade_no: outTradeNo,
@@ -549,7 +591,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           trade_code: tradeCode,
           payer_name: payerName,
           notify_url: callbackUrls().vpayPayment,
-          callback_url: String(env.VPAY_RETURN_URL || env.REDIRECT_URL || 'https://www.master7.vip'),
+          callback_url: walletOrder ? peerConfiguration.returnUrl : String(env.VPAY_RETURN_URL || env.REDIRECT_URL || 'https://www.master7.vip'),
         });
         const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {

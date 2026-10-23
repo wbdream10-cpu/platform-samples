@@ -76,3 +76,26 @@ Keep it server-side and separate from the callback-forwarding token. The route
 is unavailable to an unset or short token; this source addition does not
 configure a token, enable transactions or constitute supplier acceptance.
 
+
+## Wallet checkout scope (not deployed)
+
+`GET /platform/vpay/config` requires the query credential and returns the
+configured merchant ID, environment, enabled method codes and exact callback
+URLs. No provider credentials, merchant balance or secrets are included.
+
+`POST /platform/vpay/order` requires a separate `PLATFORM_ORDER_TOKEN` (32–1024
+bytes) and the existing order fields plus `notifyUrl` and `callbackUrl`. It can
+only create orders. Set `VPAY_ENABLED_TRADE_CODES` to the confirmed active method
+codes as a JSON array of strings, and explicitly set the HTTPS `VPAY_RETURN_URL`.
+The peer route checks both URLs against server-selected values and refuses
+unconfirmed methods. Existing callback routing/readiness and
+`VPAY_ORDERS_ENABLED` must also be configured. `VPAY_MODE` must match the wallet's
+explicit environment. This label does not prove supplier sandbox access.
+
+Query and order credentials are separate from each other, the callback token and
+the full admin token. Neither peer scope grants withdrawals, merchant balances
+or game-admin access. Creation retry claims and wallet ledger idempotency live in
+the platform; clients must not call the provider directly or reissue uncertain
+orders. The existing admin route remains compatible. These source changes do
+not configure runtime secrets, activate payment switches, deploy services or
+complete production acceptance.

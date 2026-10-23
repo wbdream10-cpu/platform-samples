@@ -5,7 +5,15 @@ const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
 const { jiliCatalogueBody } = require('./jili');
 const { venusCatalogue } = require('./venus');
-const { configuredUrl, normalizeHttpsUrl, peerCredential, vpayReadiness, integrationReadiness } = require('./readiness');
+const {
+  configuredUrl,
+  gspayPeerCredential,
+  gspayReadiness,
+  normalizeHttpsUrl,
+  peerCredential,
+  vpayReadiness,
+  integrationReadiness,
+} = require('./readiness');
 
 const { version: VERSION } = require('./package.json');
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
@@ -138,6 +146,12 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
     return Boolean(expected) && safeEqual(expected, supplied);
   }
 
+  function isGspayPeer(req, name) {
+    const expected = gspayPeerCredential(env, name);
+    const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    return Boolean(expected) && safeEqual(expected, supplied);
+  }
+
   function walletPaymentConfiguration() {
     let tradeCodes = [];
     try {
@@ -152,6 +166,30 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
       paymentReady: vpayReadiness(env).channels.payment.configurationReady && tradeCodes.length > 0
         && configuredUrl(returnUrl) && Boolean(walletPeerCredential('PLATFORM_ORDER_TOKEN')) && Boolean(walletPeerCredential('PLATFORM_QUERY_TOKEN')),
       tradeCodes, notifyUrl: callbackUrls().vpayPayment, returnUrl,
+    };
+  }
+
+  function gspayConfiguration() {
+    const readiness = gspayReadiness(env);
+    return {
+      provider: 'gspay',
+      currency: 'MYR',
+      mode: readiness.mode,
+      configured: readiness.credentialsConfigured,
+      providerBase: readiness.providerBase,
+      transactionRoutesActive: false,
+      orderReady: false,
+      queryReady: false,
+      callbacksReady: false,
+      callbackUrls: {
+        payment: callbackUrls().gspayPayment,
+        duitNow: callbackUrls().gspayDuitNow,
+      },
+      blockers: {
+        orders: readiness.channels.orders.blockers,
+        queries: readiness.channels.queries.blockers,
+        callbacks: readiness.channels.callbacks.blockers,
+      },
     };
   }
 
@@ -265,6 +303,8 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
       ...Object.fromEntries(PROVIDERS.map(name => [name, `${base}/callbacks/${name}`])),
       vpayPayment: `${base}/callbacks/vpay/payment`,
       vpayWithdrawal: `${base}/callbacks/vpay/withdrawal`,
+      gspayPayment: `${base}/callbacks/gspay/payment`,
+      gspayDuitNow: `${base}/callbacks/gspay/duitnow`,
     };
   }
 
@@ -314,6 +354,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
             jiliGames: `${base}/providers/jili/games?account=1to1`,
             venusGames: `${base}/providers/venus/games`,
             vpayStatus: `${base}/providers/vpay/status`,
+            gspayStatus: `${base}/providers/gspay/status`,
             callbacks: `${base}/callbacks`,
           },
         }, cors);
@@ -337,6 +378,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
             clotplay: Boolean(clotplayToken),
             jili: Object.fromEntries(Object.entries(jiliAccounts).map(([name, account]) => [name, Boolean(account.id && account.secret)])),
             vpay: Boolean(vpayTraderId && vpayApiToken),
+            gspay: gspayReadiness(env).credentialsConfigured,
           },
           callbackUrls: callbackUrls(),
         }, cors);
@@ -503,6 +545,41 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         }, cors);
       }
 
+      if (req.method === 'GET' && url.pathname === '/providers/gspay/status') {
+        const readiness = gspayReadiness(env);
+        return send(res, 200, {
+          provider: 'gspay',
+          currency: 'MYR',
+          configured: readiness.credentialsConfigured,
+          mode: readiness.mode,
+          transactionRoutesActive: false,
+          productionQa: 'not_verified',
+          liveReady: false,
+          callbackUrls: {
+            payment: callbackUrls().gspayPayment,
+            duitNow: callbackUrls().gspayDuitNow,
+          },
+        }, cors);
+      }
+
+      const gspayCallbackMatch = url.pathname.match(/^\/callbacks\/gspay\/(payment|duitnow)$/);
+      if (gspayCallbackMatch && req.method === 'GET') {
+        return send(res, 200, {
+          ok: true,
+          provider: 'gspay',
+          callback: gspayCallbackMatch[1],
+          active: false,
+          productionQa: 'not_verified',
+        });
+      }
+      if (gspayCallbackMatch && req.method === 'POST') {
+        // The supplier acknowledgement and retry contract is still unknown.
+        // Consume only a bounded JSON object, never forward it and never return
+        // a success acknowledgement that could stop a legitimate retry.
+        await body(req);
+        return send(res, 503, { error: 'gspay_callback_contract_not_active' });
+      }
+
       const vpayCallbackMatch = url.pathname.match(/^\/callbacks\/vpay\/(payment|withdrawal)$/);
       if (vpayCallbackMatch && req.method === 'GET') {
         return send(res, 200, {
@@ -554,6 +631,23 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
       if (req.method === 'GET' && url.pathname === '/platform/vpay/config') {
         if (!isWalletQueryPeer(req)) return send(res, 401, { error: 'unauthorized' });
         return send(res, 200, walletPaymentConfiguration());
+      }
+
+      if (req.method === 'GET' && url.pathname === '/platform/gspay/config') {
+        if (!isGspayPeer(req, 'PLATFORM_GSPAY_QUERY_TOKEN')) return send(res, 401, { error: 'unauthorized' });
+        return send(res, 200, gspayConfiguration());
+      }
+
+      if (req.method === 'POST' && url.pathname === '/platform/gspay/order') {
+        if (!isGspayPeer(req, 'PLATFORM_GSPAY_ORDER_TOKEN')) return send(res, 401, { error: 'unauthorized' });
+        await body(req);
+        return send(res, 503, { error: 'gspay_order_contract_not_active' });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/platform/gspay/order-query') {
+        if (!isGspayPeer(req, 'PLATFORM_GSPAY_QUERY_TOKEN')) return send(res, 401, { error: 'unauthorized' });
+        await body(req);
+        return send(res, 503, { error: 'gspay_query_contract_not_active' });
       }
 
       if (req.method === 'POST' && ['/admin/vpay/order', '/platform/vpay/order'].includes(url.pathname)) {

@@ -99,3 +99,18 @@ the platform; clients must not call the provider directly or reissue uncertain
 orders. The existing admin route remains compatible. These source changes do
 not configure runtime secrets, activate payment switches, deploy services or
 complete production acceptance.
+
+All three peer credentials, including `PLATFORM_CALLBACK_TOKEN`, require
+32–1024 UTF-8 bytes and must differ from each other and `GATEWAY_ADMIN_TOKEN`.
+Callback readiness and forwarding use the same validation as query/order
+authorization. Invalid or reused credentials do not forward a notification.
+
+`PUBLIC_BASE_URL` must be a standalone HTTPS origin: no non-root path, query,
+fragment, credentials or non-default port. Host casing, the default HTTPS port
+and an optional root slash are normalized before callback paths are appended.
+`VPAY_RETURN_URL` and the payment/withdrawal forwarding URLs retain their full
+HTTPS paths and query strings, but reject credentials, fragments (including an
+empty `#`), whitespace and control characters. Return and forwarding addresses
+are normalized before use; peers must submit the canonical URLs returned by
+`GET /platform/vpay/config`. Provider API URLs still support their required
+paths and signed query parameters.

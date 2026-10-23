@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const { verifyVpayNotification, vpaySignature } = require('./vpay');
 const { jiliCatalogueBody } = require('./jili');
 const { venusCatalogue } = require('./venus');
-const { configuredUrl, vpayReadiness, integrationReadiness } = require('./readiness');
+const { configuredUrl, normalizeHttpsUrl, peerCredential, vpayReadiness, integrationReadiness } = require('./readiness');
 
 const { version: VERSION } = require('./package.json');
 const PROVIDERS = ['cosmoplay', 'creative-gaming', 'pgsoft', 'spade-gaming'];
@@ -54,7 +54,7 @@ function safeEqual(a, b) {
 
 function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new Date() } = {}) {
   const currency = String(env.CURRENCY || 'MYR').toUpperCase();
-  const publicBase = cleanBase(env.PUBLIC_BASE_URL, '');
+  const publicBase = normalizeHttpsUrl(env.PUBLIC_BASE_URL, { originOnly: true });
   const allowedOrigins = browserOrigins(env);
   const evoBase = cleanBase(env.EVO_BASE_URL, 'https://api.evo888h5.com');
   const megaBase = cleanBase(env.MEGA_BASE_URL, 'https://smakermicsvc.back138.com/api/opgateway/v1/op');
@@ -62,6 +62,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   const vpayTraderId = String(env.VPAY_TRADER_ID || '').trim();
   const vpayApiToken = String(env.VPAY_API_TOKEN || '').trim();
   const vpayTimeZone = String(env.VPAY_TIME_ZONE || 'Asia/Kuala_Lumpur');
+  const vpayReturnUrl = normalizeHttpsUrl(String(env.VPAY_RETURN_URL || ''));
   const clotplayBase = cleanBase(env.CLOTPLAY_BASE_URL, 'https://api.coldboxservice.com/api/MOGI');
   const clotplayToken = String(env.CLOTPLAY_OPERATOR_TOKEN || '').trim();
   const jiliBase = cleanBase(env.JILI_BASE_URL, 'https://wb-api-2.jiscc77s.com/api1');
@@ -122,11 +123,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
   // A wallet query credential may confirm an existing payment, but may not
   // create orders, read the merchant balance, withdraw or access game admins.
   function walletPeerCredential(name) {
-    const expected = String(env[name] || '');
-    const bytes = Buffer.byteLength(expected);
-    if (bytes < 32 || bytes > 1024 || ['GATEWAY_ADMIN_TOKEN', 'PLATFORM_QUERY_TOKEN', 'PLATFORM_ORDER_TOKEN', 'PLATFORM_CALLBACK_TOKEN']
-      .some(key => key !== name && String(env[key] || '') === expected)) return '';
-    return expected;
+    return peerCredential(env, name);
   }
 
   function isWalletQueryPeer(req) {
@@ -148,7 +145,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
       if (Array.isArray(values) && values.length && new Set(values).size === values.length
         && values.every(value => typeof value === 'string' && ['1', '2', '3', '4', '5', '7'].includes(value))) tradeCodes = values;
     } catch {}
-    const returnUrl = String(env.VPAY_RETURN_URL || '');
+    const returnUrl = vpayReturnUrl;
     return {
       provider: 'vpay', traderId: vpayTraderId, mode: String(env.VPAY_MODE || 'uat'),
       configured: Boolean(vpayTraderId && vpayApiToken),
@@ -522,10 +519,11 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
         if (String(payload.trader_id || '') !== vpayTraderId || !verifyVpayNotification(payload, vpayApiToken)) {
           return send(res, 401, { error: 'invalid_vpay_signature' });
         }
-        const forwardUrl = vpayCallbackMatch[1] === 'payment'
+        const forwardUrl = normalizeHttpsUrl(vpayCallbackMatch[1] === 'payment'
           ? String(env.VPAY_PAYMENT_FORWARD_URL || '')
-          : String(env.VPAY_WITHDRAWAL_FORWARD_URL || '');
-        if (!configuredUrl(forwardUrl) || String(env.PLATFORM_CALLBACK_TOKEN || '').length < 32) {
+          : String(env.VPAY_WITHDRAWAL_FORWARD_URL || ''));
+        const callbackToken = walletPeerCredential('PLATFORM_CALLBACK_TOKEN');
+        if (!forwardUrl || !callbackToken) {
           return send(res, 503, { error: 'platform_wallet_callback_not_configured' });
         }
         const forward = await upstream(forwardUrl, {
@@ -533,7 +531,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           headers: {
             Accept: 'application/json,text/plain',
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${env.PLATFORM_CALLBACK_TOKEN}`,
+            Authorization: `Bearer ${callbackToken}`,
           },
           body: JSON.stringify(payload),
         });
@@ -584,6 +582,9 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           || payload.notifyUrl !== peerConfiguration.notifyUrl || payload.callbackUrl !== peerConfiguration.returnUrl)) {
           return send(res, 503, { error: 'vpay_payment_configuration_incomplete' });
         }
+        const returnUrl = walletOrder ? peerConfiguration.returnUrl
+          : (env.VPAY_RETURN_URL ? vpayReturnUrl : normalizeHttpsUrl(String(env.REDIRECT_URL || 'https://www.master7.vip')));
+        if (!returnUrl) return send(res, 503, { error: 'vpay_payment_configuration_incomplete' });
         const result = await vpay('TRADER_ORDER', {
           title,
           out_trade_no: outTradeNo,
@@ -591,7 +592,7 @@ function makeApp({ env = process.env, fetchImpl = global.fetch, now = () => new 
           trade_code: tradeCode,
           payer_name: payerName,
           notify_url: callbackUrls().vpayPayment,
-          callback_url: walletOrder ? peerConfiguration.returnUrl : String(env.VPAY_RETURN_URL || env.REDIRECT_URL || 'https://www.master7.vip'),
+          callback_url: returnUrl,
         });
         const providerOK = result.data?.code === 0 || result.data?.code === '0';
         return send(res, result.ok && providerOK ? 200 : 502, {
